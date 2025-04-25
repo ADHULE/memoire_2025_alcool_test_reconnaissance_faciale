@@ -1,32 +1,40 @@
+/* Style général pour la fenêtre principale */
 QMainWindow {
-    background: linear-gradient(135deg, #1c2833, #283747); /* Dégradé sombre */
+    background: url("Images/background.jpg") no-repeat center center fixed;
+    background-size: cover;
     color: #ecf0f1;
 }
-/* QFrame{
-    border: 1px solid white;
-} */
 
+/* Style des cadres (QFrame) */
+QFrame {
+    border: 1px solid rgba(255, 255, 255, 0.2); /* Légère bordure pour délimiter */
+    border-radius: 10px;
+}
+
+/* Cadre du titre */
 QFrame#titleFrame {
-    background-color: rgba(255, 255, 255, 0.1);
+    background-color: rgba(255, 0, 0, 0.1); /* Rouge léger pour refléter le danger */
     border-radius: 10px;
     padding: 20px;
     margin-bottom: 20px;
 }
 
-
+/* Cadre du formulaire */
 QFrame#formFrame {
-    background-color: rgba(255, 255, 255, 0.1);
+    background-color: rgba(0, 0, 255, 0.1); /* Bleu léger pour refléter la sobriété */
     border-radius: 10px;
     padding: 20px;
     margin-bottom: 20px;
 }
 
+/* Cadre des boutons */
 QFrame#buttonFrame {
-    background-color: rgba(255, 255, 255, 0.1);
+    background-color: rgba(0, 255, 0, 0.1); /* Vert léger pour refléter l'action positive */
     border-radius: 10px;
     padding: 20px;
 }
 
+/* Style des labels */
 QLabel {
     color: #ecf0f1;
     font-size: 14px;
@@ -36,8 +44,10 @@ QLabel#title {
     font-size: 24px;
     font-weight: bold;
     text-align: center;
+    color: #e74c3c; /* Rouge pour attirer l'attention */
 }
 
+/* Style des champs de saisie */
 QLineEdit {
     background-color: rgba(255, 255, 255, 0.2);
     border: 1px solid #3498db;
@@ -50,12 +60,14 @@ QLineEdit:focus {
     border: 2px solid #2980b9;
 }
 
+/* Style des boutons */
 QPushButton {
     background-color: #3498db;
     border: none;
     border-radius: 5px;
     padding: 10px 20px;
     color: #ecf0f1;
+    font-weight: bold;
 }
 
 QPushButton:hover {
@@ -70,18 +82,37 @@ QPushButton#cancelButton:hover {
     background-color: #c0392b;
 }
 
+/* Style des logos */
 QLabel#leftLogo, QLabel#rightLogo {
-    width: 50px;
-    height: 50px;
-    border-radius: 25px;
+    width: 100px; /* Augmentation de la taille pour plus de visibilité */
+    height: 100px;
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0.2); /* Fond léger pour contraste */
 }
 
 QLabel#leftLogo {
-background: url("Images/logo.jpeg")no-repeat center cover;
-border-radius: 50%;
+    background: url("Images/my_pays.jpg") no-repeat center center;
+    background-size: cover;
 }
 
 QLabel#rightLogo {
-    background: url("Images/batiment.jpeg")no-repeat center cover;
-    border-radius: 50%;
+    background: url("Images/ivresse_volant.jpg") no-repeat center center;
+    background-size: cover;
+}
+
+/* Style des boutons de contrôle caméra */
+QPushButton#startCameraButton {
+    background-color: #27ae60; /* Vert pour démarrer */
+}
+
+QPushButton#startCameraButton:hover {
+    background-color: #2ecc71;
+}
+
+QPushButton#stopCameraButton {
+    background-color: #e74c3c; /* Rouge pour arrêter */
+}
+
+QPushButton#stopCameraButton:hover {
+    background-color: #c0392b;
 }

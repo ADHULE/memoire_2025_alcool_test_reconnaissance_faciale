@@ -3,38 +3,35 @@
 /* --- Styles généraux --- */
 QMainWindow {
     font-family: 'Segoe UI', sans-serif;
-    /* Police moderne et lisible */
-    background: linear-gradient(135deg, #2c3e50, #34495e);
-    /* Dégradé sombre et élégant */
+    /* Dégradé évoquant une ambiance nocturne et intense */
+    background: linear-gradient(135deg, #4B0082, #FF4500);
     color: #ecf0f1;
-    /* Texte clair pour contraste */
 }
 
 /* --- Panneaux et Widgets Généraux --- */
 QTabWidget::pane {
-    background-color: rgba(52, 73, 94, 0.8);
-    /* Panneau semi-transparent */
-    border: 2px solid #3498db;
-    /* Bordure bleue accentuée */
+    /* Fond sombre avec une légère teinte chaotique */
+    background-color: rgba(70, 20, 30, 0.8);
+    /* Bordure orange vif pour rappeler l'éclat des néons */
+    border: 2px solid #FF8C00;
     border-radius: 10px;
     margin: 10px;
 }
 
 QListView,
 QDialog {
-    border: 1px solid #2980b9;
-    background-color: #132023;
+    border: 1px solid #FF4500;
+    background-color: #1c1c1c;
     color: #fff;
-
 }
 
 QComboBox,
 QLineEdit {
-    background-color: #bdc3c7;
-    border: 1px solid #3498db;
-    color: #2c3e50;
+    /* Fond gris sombre pour créer du contraste avec des bordures néon */
+    background-color: #555555;
+    border: 1px solid #FF8C00;
+    color: #ecf0f1;
     border-radius: 5px;
-    /* padding: 8px 12px; */
     font-size: 16px;
 }
 
@@ -42,9 +39,10 @@ QLineEdit:hover,
 QComboBox:hover,
 QDateEdit:hover,
 QDateTimeEdit:hover {
-    border: 1px solid red;
-    background-color: white;
-    color: #000000;
+    /* Effet de survol avec une bordure "tomate" rappelant l'urgence */
+    border: 1px solid #FF6347;
+    background-color: #666666;
+    color: #ffffff;
 }
 
 /* --- Titres et Labels --- */
@@ -57,70 +55,68 @@ QLabel#titleLabel {
     font-size: 32px;
     font-weight: bold;
     margin-bottom: 20px;
-    color: #3498db;
-    /* Accent bleu pour le titre */
+    /* Teinte orange vif pour un impact immédiat et une ambiance alarmante */
+    color: #FF4500;
 }
 
 QLabel#faculte_label {
     font-size: 16px;
-    color: #95a5a6;
-    /* Gris clair pour les labels secondaires */
+    color: #b0b0b0;
 }
 
 /* --- Onglets de QTabBar --- */
 QTabBar::tab {
     margin: 10px;
     font-size: 20px;
-    /* width: 180px; */
     color: #ecf0f1;
     border-radius: 8px;
-    background-color: rgba(44, 62, 80, 0.7);
-    /* Onglets semi-transparents */
+    /* Fond violet sombre pour rappeler la pénombre des soirées */
+    background-color: rgba(55, 20, 60, 0.7);
 }
 
 QTabBar::tab:selected {
-    color: #3498db;
-    background-color: #ecf0f1;
+    /* Onglet sélectionné en orange pour contraster avec le reste et attirer l'attention */
+    background-color: #FF8C00;
     color: #2c3e50;
 }
 
 QTabBar::tab:hover {
-    background-color: #7f8c8d;
-    color: #ecf0f1;
+    /* Effet survol avec une teinte rouge orangé rappelant les lumières vives */
+    background-color: rgba(255, 69, 0, 0.8);
+    color: #ffffff;
 }
 
 /* --- Boutons Généraux --- */
 QPushButton,
 QToolButton {
-    background-color: #3498db;
+    /* Boutons en orange vif pour un rendu énergique et une sensation d'urgence */
+    background-color: #FF4500;
     color: #ecf0f1;
     border: none;
     border-radius: 5px;
     font-size: 16px;
-    /* padding: 10px 20px; */
 }
-
 
 QPushButton:hover,
 QToolButton:hover {
-    background-color: #2980b9;
+    background-color: #FF6347;
 }
 
 QPushButton:pressed,
 QToolButton:pressed {
-    background-color: #1f618d;
+    background-color: #E63900;
 }
 
 /* --- Boutons Spécifiques --- */
 QPushButton#modify_button {
+    /* Bouton vert pour les actions moins risquées, contraste avec l'ambiance chaotique */
     background-color: #2ecc71;
-    /* Vert pour modifier */
     color: #ecf0f1;
 }
 
 QPushButton#delete_button {
+    /* Bouton rouge pour les actions critiques */
     background-color: #e74c3c;
-    /* Rouge pour supprimer */
     color: #ecf0f1;
 }
 
@@ -129,6 +125,8 @@ QPushButton#delete_button {
     width: 100px;
     border: 1px solid yellow;
 }
-QFrame#forme_frame{
+
+/* --- Cadre spécifique --- */
+QFrame#forme_frame {
     border: 1px solid white;
 }

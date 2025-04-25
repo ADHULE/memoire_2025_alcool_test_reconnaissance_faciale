@@ -1,8 +1,8 @@
 import sys
 import os
 from PySide6.QtWidgets import QApplication, QMessageBox
-from Views.Home.main_window import MainWindow
-from Views.Home.login_page import LoginWindow
+from Views.home.main_window import MainWindow
+from Views.home.login_page import LoginWindow
 
 if __name__ == "__main__":
     try:

@@ -3,7 +3,7 @@ from PySide6.QtCore import *
 import functools
 
 # Importation des différentes pages
-
+from Views.chauffeur.chauffeur_view import Chauffeur_View
 
 
 class MainWindow(QMainWindow):
@@ -21,7 +21,7 @@ class MainWindow(QMainWindow):
 
         # Ajouter les différentes pages à l'onglet
         self.pages = {
-            
+            "Driver":Chauffeur_View(parent=self),
             
         }
 
