@@ -1,0 +1,87 @@
+QMainWindow {
+    background: linear-gradient(135deg, #1c2833, #283747); /* Dégradé sombre */
+    color: #ecf0f1;
+}
+/* QFrame{
+    border: 1px solid white;
+} */
+
+QFrame#titleFrame {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+
+QFrame#formFrame {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+QFrame#buttonFrame {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    padding: 20px;
+}
+
+QLabel {
+    color: #ecf0f1;
+    font-size: 14px;
+}
+
+QLabel#title {
+    font-size: 24px;
+    font-weight: bold;
+    text-align: center;
+}
+
+QLineEdit {
+    background-color: rgba(255, 255, 255, 0.2);
+    border: 1px solid #3498db;
+    border-radius: 5px;
+    padding: 8px;
+    color: #ecf0f1;
+}
+
+QLineEdit:focus {
+    border: 2px solid #2980b9;
+}
+
+QPushButton {
+    background-color: #3498db;
+    border: none;
+    border-radius: 5px;
+    padding: 10px 20px;
+    color: #ecf0f1;
+}
+
+QPushButton:hover {
+    background-color: #2980b9;
+}
+
+QPushButton#cancelButton {
+    background-color: #e74c3c;
+}
+
+QPushButton#cancelButton:hover {
+    background-color: #c0392b;
+}
+
+QLabel#leftLogo, QLabel#rightLogo {
+    width: 50px;
+    height: 50px;
+    border-radius: 25px;
+}
+
+QLabel#leftLogo {
+background: url("Images/logo.jpeg")no-repeat center cover;
+border-radius: 50%;
+}
+
+QLabel#rightLogo {
+    background: url("Images/batiment.jpeg")no-repeat center cover;
+    border-radius: 50%;
+}

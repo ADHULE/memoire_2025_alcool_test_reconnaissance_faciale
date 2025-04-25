@@ -1,0 +1,134 @@
+/* general_style.css */
+
+/* --- Styles généraux --- */
+QMainWindow {
+    font-family: 'Segoe UI', sans-serif;
+    /* Police moderne et lisible */
+    background: linear-gradient(135deg, #2c3e50, #34495e);
+    /* Dégradé sombre et élégant */
+    color: #ecf0f1;
+    /* Texte clair pour contraste */
+}
+
+/* --- Panneaux et Widgets Généraux --- */
+QTabWidget::pane {
+    background-color: rgba(52, 73, 94, 0.8);
+    /* Panneau semi-transparent */
+    border: 2px solid #3498db;
+    /* Bordure bleue accentuée */
+    border-radius: 10px;
+    margin: 10px;
+}
+
+QListView,
+QDialog {
+    border: 1px solid #2980b9;
+    background-color: #132023;
+    color: #fff;
+
+}
+
+QComboBox,
+QLineEdit {
+    background-color: #bdc3c7;
+    border: 1px solid #3498db;
+    color: #2c3e50;
+    border-radius: 5px;
+    /* padding: 8px 12px; */
+    font-size: 16px;
+}
+
+QLineEdit:hover,
+QComboBox:hover,
+QDateEdit:hover,
+QDateTimeEdit:hover {
+    border: 1px solid red;
+    background-color: white;
+    color: #000000;
+}
+
+/* --- Titres et Labels --- */
+QLabel {
+    color: #ecf0f1;
+    font-size: 18px;
+}
+
+QLabel#titleLabel {
+    font-size: 32px;
+    font-weight: bold;
+    margin-bottom: 20px;
+    color: #3498db;
+    /* Accent bleu pour le titre */
+}
+
+QLabel#faculte_label {
+    font-size: 16px;
+    color: #95a5a6;
+    /* Gris clair pour les labels secondaires */
+}
+
+/* --- Onglets de QTabBar --- */
+QTabBar::tab {
+    margin: 10px;
+    font-size: 20px;
+    /* width: 180px; */
+    color: #ecf0f1;
+    border-radius: 8px;
+    background-color: rgba(44, 62, 80, 0.7);
+    /* Onglets semi-transparents */
+}
+
+QTabBar::tab:selected {
+    color: #3498db;
+    background-color: #ecf0f1;
+    color: #2c3e50;
+}
+
+QTabBar::tab:hover {
+    background-color: #7f8c8d;
+    color: #ecf0f1;
+}
+
+/* --- Boutons Généraux --- */
+QPushButton,
+QToolButton {
+    background-color: #3498db;
+    color: #ecf0f1;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    /* padding: 10px 20px; */
+}
+
+
+QPushButton:hover,
+QToolButton:hover {
+    background-color: #2980b9;
+}
+
+QPushButton:pressed,
+QToolButton:pressed {
+    background-color: #1f618d;
+}
+
+/* --- Boutons Spécifiques --- */
+QPushButton#modify_button {
+    background-color: #2ecc71;
+    /* Vert pour modifier */
+    color: #ecf0f1;
+}
+
+QPushButton#delete_button {
+    background-color: #e74c3c;
+    /* Rouge pour supprimer */
+    color: #ecf0f1;
+}
+
+QPushButton#modify_button,
+QPushButton#delete_button {
+    width: 100px;
+    border: 1px solid yellow;
+}
+QFrame#forme_frame{
+    border: 1px solid white;
+}
