@@ -4,7 +4,8 @@
 QMainWindow {
     font-family: 'Segoe UI', sans-serif;
     /* Dégradé évoquant une ambiance nocturne et intense */
-    background: linear-gradient(135deg, #4B0082, #FF4500);
+    /* background: linear-gradient(135deg, #4B0082, #FF4500); */
+    background-color: rgba(139, 69, 19, 0.8);
     color: #ecf0f1;
 }
 

@@ -1,5 +1,5 @@
-from PySide6.QtWidgets import *
-from PySide6.QtCore import *
+from PySide6.QtWidgets import QMainWindow, QTabWidget, QStackedWidget, QToolButton, QMenu, QPushButton
+from PySide6.QtCore import Signal, Qt
 import functools
 
 # Importation des différentes pages
@@ -21,8 +21,7 @@ class MainWindow(QMainWindow):
 
         # Ajouter les différentes pages à l'onglet
         self.pages = {
-            "Driver":Chauffeur_View(parent=self),
-            
+            "Driver": Chauffeur_View(parent=self),
         }
 
         # Gérer les différentes pages filles qui ne sont pas directement affichées dans la page principale
@@ -37,20 +36,31 @@ class MainWindow(QMainWindow):
         self.menu_button.setMenu(QMenu(self.menu_button))
         self.menu_button.setVisible(False)
 
+        # ✅ **Ajout du bouton de déconnexion**
+        self.logout_button = QPushButton("Déconnexion")
+        self.logout_button.clicked.connect(self.back_to_login_page)
+        self.tab_widget.setCornerWidget(self.logout_button, Qt.TopRightCorner)
+
         # Connecter le signal de changement d'onglet
         self.tab_widget.currentChanged.connect(self.on_tab_changed)
 
     def create_tabs(self):
-        # Ajouter les pages aux onglets
+        """
+        Ajoute les pages aux onglets du widget tabulaire.
+        """
         for page_name, page in self.pages.items():
             self.tab_widget.addTab(page, page_name)
 
     def on_tab_changed(self, index):
-        # Afficher ou masquer le bouton de menu en fonction de l'index de l'onglet
+        """
+        Gère l'affichage du bouton de menu en fonction de l'onglet actif.
+        """
         self.menu_button.setVisible(index == 2)
 
     def resizeEvent(self, event):
-        # Gestion de l'affichage des onglets et du bouton de menu en fonction de la taille de la fenêtre
+        """
+        Ajuste l'affichage des onglets et du bouton de menu en fonction de la taille de la fenêtre.
+        """
         is_narrow = event.size().width() < 600
         self.tab_widget.tabBar().setVisible(not is_narrow)
         self.menu_button.setVisible(is_narrow)
@@ -64,12 +74,16 @@ class MainWindow(QMainWindow):
         super().resizeEvent(event)
 
     def back_to_login_page(self):
-        # Émettre le signal pour retourner à la page de connexion
+        """
+        Émet le signal pour retourner à la page de connexion et ferme la fenêtre principale.
+        """
         self.login_signal.emit()
         self.close()
 
     def navigate_to(self, page_name):
-        # Naviguer vers la page spécifiée
+        """
+        Permet de naviguer vers une page spécifique.
+        """
         if page_name in self.pages:
             self.tab_widget.setCurrentWidget(self.pages[page_name])
         else:

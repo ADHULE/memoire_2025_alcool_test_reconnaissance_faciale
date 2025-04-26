@@ -4,13 +4,12 @@ from PySide6.QtCore import *
 import re  # permet de gerer le format de l'annee
 from Controllers.chauffeur_controller import Chauffeur_Controller
 
-
 class Chauffeur_View(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Chauffeurs")
         self.parent = parent
-        self.chauffeur_controller =  Chauffeur_Controller()
+        self.chauffeur_controller = Chauffeur_Controller
         self.left_layout = QVBoxLayout()
         self.right_layout = QVBoxLayout()
         self.central_layout = QHBoxLayout()
@@ -68,7 +67,7 @@ class Chauffeur_View(QWidget):
         )
         self.left_layout.addLayout(self.permis_input)
 
-        # self.create_button = self.create_button("Créer", self.create_chauffeur)
+        self.create_button = self.create_button("Créer", self.create_chauffeur)
 
         self.left_layout.addLayout(self.create_button)
 
@@ -162,7 +161,7 @@ class Chauffeur_View(QWidget):
 
         try:
             if self.chauffeur_controller:
-                self.chauffeur_controller.add_chauffeur(
+                self.chauffeur_controller.new_Driver(
                     nom, postnom, prenom, phone, email, numero_permis
                 )
                 self.show_message("Succès", "Chauffeur créé avec succès.")
@@ -188,7 +187,7 @@ class Chauffeur_View(QWidget):
     def load_chauffeurs(self):
         try:
             if self.chauffeur_controller:
-                chauffeurs = self.chauffeur_controller.get_chauffeurs()
+                chauffeurs = self.chauffeur_controller.get_all_drivers()
                 self.populate_list(chauffeurs)
             else:
                 self.show_message(
@@ -280,7 +279,7 @@ class Chauffeur_View(QWidget):
         if reply == QMessageBox.Yes:
             try:
                 if self.chauffeur_controller:
-                    self.chauffeur_controller.delete_chauffeur(chauffeur_id)
+                    self.chauffeur_controller.delete_driver(chauffeur_id)
                     self.show_message("Succès", "Chauffeur supprimé avec succès.")
                     self.load_chauffeurs()
                 else:
@@ -293,7 +292,7 @@ class Chauffeur_View(QWidget):
     def filter_chauffeurs(self, search_text):
         try:
             if self.chauffeur_controller:
-                chauffeurs = self.chauffeur_controller.get_chauffeurs()
+                chauffeurs = self.chauffeur_controller.get_all_drivers()
                 filtered_chauffeurs = []
                 for chauffeur in chauffeurs:
                     search_string = (

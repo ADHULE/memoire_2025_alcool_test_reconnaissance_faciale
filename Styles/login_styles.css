@@ -1,6 +1,8 @@
 /* Style général pour la fenêtre principale */
 QMainWindow {
-    background: url("Images/background.jpg") no-repeat center center fixed;
+    /* background: url("Images/background.jpg") no-repeat center center fixed; */
+    background-color: rgba(139, 69, 19, 0.8);
+
     background-size: cover;
     color: #ecf0f1;
 }
@@ -91,7 +93,7 @@ QLabel#leftLogo, QLabel#rightLogo {
 }
 
 QLabel#leftLogo {
-    background: url("Images/my_pays.jpg") no-repeat center center;
+    background: url("Images/okapi_ivresse.jpg") no-repeat center center;
     background-size: cover;
 }
 
