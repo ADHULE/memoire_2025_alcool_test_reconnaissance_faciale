@@ -1,7 +1,7 @@
 from Models.database_model import Base
-from Models.administrateur_model import Administrateur_Model
-from.chaffeur_model import Chauffeur_Model
-from.historitique_model import Historique_Model
-from.personne_model import Personne_Model
-from.historitique_model import Historique_Model
-from.vehicule_model import Vehicule_Model
+from Models.administrateur_model import ADMINISTRATEUR
+from.chauffeur_model import CHAUFFEUR
+from.historitique_model import HISTORIQUE
+from.personne_model import PERSONNE
+from.vehicule_model import VEHICULE
+from.image_model import IMAGE

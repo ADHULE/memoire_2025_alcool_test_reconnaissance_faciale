@@ -1,12 +1,12 @@
 from Models.database_model import my_session
-from Models.chaffeur_model import Chauffeur_Model  # Remarquez l'orthographe utilisée dans votre projet
+from Models.chauffeur_model import CHAUFFEUR  # Remarquez l'orthographe utilisée dans votre projet
 from sqlalchemy.exc import SQLAlchemyError
 import logging
 
 # Assurez-vous que le module de logging est configuré dans votre application.
 logging.basicConfig(level=logging.INFO)
 
-class Chauffeur_Controller:
+class CHAUFFEUR_CONTROLLER:
     """
     Contrôleur pour gérer les opérations CRUD sur les objets Chauffeur.
     """
@@ -16,7 +16,7 @@ class Chauffeur_Controller:
         Crée un nouveau chauffeur et l'enregistre en base de données.
         """
         try:
-            new_driver = Chauffeur_Model(
+            new_driver = CHAUFFEUR(
                 nom=nom,
                 postnom=postnom,
                 prenom=prenom,
@@ -40,7 +40,7 @@ class Chauffeur_Controller:
         """
         try:
             # Note : .get() est simple à utiliser mais peut être remplacé par session.get() sur SQLAlchemy 1.4+
-            driver = my_session.query(Chauffeur_Model).get(driver_id)
+            driver = my_session.query(CHAUFFEUR).get(driver_id)
             if driver is None:
                 logging.warning("Aucun chauffeur trouvé avec l'id: %s", driver_id)
             return driver
@@ -54,7 +54,7 @@ class Chauffeur_Controller:
         Récupère tous les chauffeurs présents en base de données.
         """
         try:
-            drivers = my_session.query(Chauffeur_Model).all()
+            drivers = my_session.query(CHAUFFEUR).all()
             return drivers
         except SQLAlchemyError as e:
             my_session.rollback()
@@ -68,7 +68,7 @@ class Chauffeur_Controller:
         Exemple d'appel : update_driver(1, telephone="0123456789", email="nouveau@mail.com")
         """
         try:
-            driver = my_session.query(Chauffeur_Model).get(driver_id)
+            driver = my_session.query(CHAUFFEUR).get(driver_id)
             if driver is None:
                 logging.warning("Aucun chauffeur trouvé avec l'id: %s", driver_id)
                 return None
@@ -94,7 +94,7 @@ class Chauffeur_Controller:
         Renvoie True si la suppression réussit, False si le chauffeur n'existe pas.
         """
         try:
-            driver = my_session.query(Chauffeur_Model).get(driver_id)
+            driver = my_session.query(CHAUFFEUR).get(driver_id)
             if driver is None:
                 logging.warning("Aucun chauffeur trouvé avec l'id: %s", driver_id)
                 return False

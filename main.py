@@ -1,8 +1,8 @@
 import sys
 import os
 from PySide6.QtWidgets import QApplication, QMessageBox
-from Views.home.main_window import MainWindow
-from Views.home.login_page import LoginWindow
+from Views.home.main_window import MAINWINDOW
+from Views.home.login_page import LOGINWINDOW
 
 if __name__ == "__main__":
     try:
@@ -23,8 +23,8 @@ if __name__ == "__main__":
             QMessageBox.warning(None, "Warning", f"Stylesheet not found at {css_path}")
         
         # Instanciation des fenêtres
-        window = MainWindow()
-        login = LoginWindow()
+        window = MAINWINDOW()
+        login = LOGINWINDOW()
 
         # Connexion des signaux
         login.home_page_signal.connect(window.show)

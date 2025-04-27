@@ -1,15 +1,11 @@
 from PySide6.QtWidgets import *
 from PySide6.QtGui import *
 from PySide6.QtCore import *
-from Controllers.etudiant_controller import EtudiantController
-from Controllers.faculte_controller import FaculteController
-from Controllers.departement_controller import DepartementController
-from Controllers.promotion_controller import PromotionController
-from Controllers.promotions_liste_controller import ListeController
+
 import re  # Utilisé pour la validation du format de l'année académique
+from Controllers.chauffeur_controller import CHAUFFEUR_CONTROLLER
 
-
-class ModifyEtudiantView(QDialog):
+class MDIFIER_CHAUFFEUR(QDialog):
     def __init__(self, etudiant_id, parent=None):
         super().__init__(parent)
         self.etudiant_id = etudiant_id
@@ -17,11 +13,7 @@ class ModifyEtudiantView(QDialog):
         self.main_layout = QVBoxLayout()  # Utilisation d'un seul layout vertical
 
         # Initialisation des contrôleurs
-        self.etudiant_controller = EtudiantController()
-        self.faculte_controller = FaculteController()
-        self.departement_controller = DepartementController()
-        self.promotion_controller = PromotionController()
-        self.liste_nom_promotion_controller = ListeController()
+       
 
         self.setLayout(self.setup_ui())
         self.load_etudiant_data()

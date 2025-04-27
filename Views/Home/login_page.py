@@ -3,7 +3,7 @@ from PySide6.QtWidgets import *
 from PySide6.QtCore import Qt, Signal
 from functools import partial
 
-class LoginWindow(QMainWindow):
+class LOGINWINDOW(QMainWindow):
     # Signal pour naviguer vers la page principale après la connexion
     home_page_signal = Signal()
     # Signal pour gérer l'annulation de connexion

@@ -1,12 +1,12 @@
-from PySide6.QtWidgets import QMainWindow, QTabWidget, QStackedWidget, QToolButton, QMenu, QPushButton
-from PySide6.QtCore import Signal, Qt
+from PySide6.QtWidgets import *
+from PySide6.QtCore import *
 import functools
 
 # Importation des différentes pages
-from Views.chauffeur.chauffeur_view import Chauffeur_View
+from Views.chauffeur.enregistrer import  CHAUFFEUR_VIEW
 
 
-class MainWindow(QMainWindow):
+class MAINWINDOW(QMainWindow):
     # Signal pour retourner à la page de connexion
     login_signal = Signal()
 
@@ -21,11 +21,8 @@ class MainWindow(QMainWindow):
 
         # Ajouter les différentes pages à l'onglet
         self.pages = {
-            "Driver": Chauffeur_View(parent=self),
+            "Driver": CHAUFFEUR_VIEW(parent=self),
         }
-
-        # Gérer les différentes pages filles qui ne sont pas directement affichées dans la page principale
-        self.stack_widget = QStackedWidget()
 
         # Créer les onglets
         self.create_tabs()
@@ -36,7 +33,7 @@ class MainWindow(QMainWindow):
         self.menu_button.setMenu(QMenu(self.menu_button))
         self.menu_button.setVisible(False)
 
-        # ✅ **Ajout du bouton de déconnexion**
+        # Ajout du bouton de déconnexion
         self.logout_button = QPushButton("Déconnexion")
         self.logout_button.clicked.connect(self.back_to_login_page)
         self.tab_widget.setCornerWidget(self.logout_button, Qt.TopRightCorner)

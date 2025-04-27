@@ -9,7 +9,7 @@ QMainWindow {
 
 /* Style des cadres (QFrame) */
 QFrame {
-    border: 1px solid rgba(255, 255, 255, 0.2); /* Légère bordure pour délimiter */
+    border: 1px solid rgba(255, 255, 255, 0.15); /* Légère bordure pour délimiter */
     border-radius: 10px;
 }
 
