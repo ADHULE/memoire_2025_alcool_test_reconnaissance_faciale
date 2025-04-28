@@ -1,0 +1,35 @@
+/* Style général du programme */
+QMainWindow {
+    background-color: #8d410f; /* Marron foncé rappelant la couleur du whisky */
+}
+
+/* Label affichant la webcam - Supprimer les bordures et padding pour éviter un affichage dynamique */
+QLabel {
+    background-color: #cdbfbf; /* Fond noir pour un meilleur affichage vidéo */
+}
+
+/* Style des boutons */
+QPushButton {
+    background-color: #8B4513; /* Brun inspiré du bois de chêne */
+    color: white;
+    font-size: 16px;
+    font-weight: bold;
+    border: 2px solid #DAA520; /* Doré */
+    border-radius: 8px;
+    padding: 8px;
+}
+
+/* Effet des boutons au survol */
+QPushButton:hover {
+    background-color: #B86E1B; /* Effet lumineux */
+}
+
+/* Effet des boutons lorsqu'ils sont enfoncés */
+QPushButton:pressed {
+    background-color: #5D2E0F; /* Effet sombre */
+}
+
+/* Transition pour un effet fluide */
+QPushButton {
+    transition: background-color 0.3s ease-in-out;
+}

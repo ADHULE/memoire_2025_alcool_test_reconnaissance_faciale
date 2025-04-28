@@ -2,8 +2,8 @@ import logging
 from PySide6.QtWidgets import *
 from PySide6.QtGui import *
 from PySide6.QtCore import *
-from Controllers.photo_controller import Photocontroller
-from Controllers.etudiant_controller import EtudiantController
+from Controllers.image_controller import IMAGE_CONTROLLER
+from Controllers.chauffeur_controller import CHAUFFEUR_CONTROLLER
 
 import os  # Gestion des fichiers et des répertoires
 import cv2  # Bibliothèque OpenCV pour la vision par ordinateur (utilisée pour le traitement d'image)
@@ -12,7 +12,7 @@ from PIL import Image  # Bibliothèque pour manipuler les images
 import threading  # Pour exécuter l'entraînement dans un thread séparé
 import time
 
-class PhotoDisplay(QWidget):
+class DISPLAY_IMAGES(QWidget):
     # Déclaration des signaux pour l'entraînement.
     training_started_signal = Signal()
     training_progress_signal = Signal(int)
@@ -24,8 +24,8 @@ class PhotoDisplay(QWidget):
         self.parent = parent  # Référence vers le parent
 
         # Initialisation des contrôleurs
-        self.photo_controller = Photocontroller()
-        self.person_controller = EtudiantController()
+        self.photo_controller = IMAGE_CONTROLLER()
+        self.person_controller = CHAUFFEUR_CONTROLLER()
 
         # Création du modèle de reconnaissance faciale LBPH.
         # Pour sauvegarder sous YAML, il suffit d'utiliser l'extension appropriée lors de l'appel à .save().
@@ -150,7 +150,7 @@ class PhotoDisplay(QWidget):
         image_label.setPixmap(pixmap)
         image_label.setAlignment(Qt.AlignCenter)
 
-        person = self.person_controller.get_etudiant_by_id(photo.personne_id)
+        person = self.person_controller.get_driver(photo.personne_id)
         person_name = f"{person.nom} {person.postnom} {person.prenom}" if person else "Inconnu"
 
         name_label = QLabel(person_name)
@@ -186,7 +186,7 @@ class PhotoDisplay(QWidget):
 
         filtered_photos = []
         for photo in self.all_photos:
-            person = self.person_controller.get_etudiant_by_id(photo.personne_id)
+            person = self.person_controller.get_driver(photo.personne_id)
             if person:
                 full_name = f"{person.nom} {person.postnom} {person.prenom}".lower()
                 if text.lower() in full_name:

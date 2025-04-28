@@ -1,7 +1,7 @@
 from PySide6.QtWidgets import *
 from PySide6.QtCore import *
 from PySide6.QtGui import QPixmap
-from Controllers.photo_controller import Photocontroller
+from Controllers.image_controller import IMAGE_CONTROLLER
 import logging
 
 # Configuration de la journalisation
@@ -15,7 +15,7 @@ class ModifyPhotoView(QDialog):
 
         # Identifiant de la photo à modifier et instanciation du contrôleur
         self.photo_id = photo_id
-        self.photo_controller = Photocontroller()
+        self.photo_controller = IMAGE_CONTROLLER()
 
         # URL actuelle de la photo (sera chargée)
         self.current_photo_url = None

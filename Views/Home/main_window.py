@@ -3,7 +3,9 @@ from PySide6.QtCore import *
 import functools
 
 # Importation des différentes pages
-from Views.chauffeur.enregistrer import  CHAUFFEUR_VIEW
+from Views.chauffeur.enregistrer import CHAUFFEUR_VIEW
+from Views.image.image_view import IMAGE_VIEW
+from Views.image.display_image import DISPLAY_IMAGES
 
 
 class MAINWINDOW(QMainWindow):
@@ -22,6 +24,8 @@ class MAINWINDOW(QMainWindow):
         # Ajouter les différentes pages à l'onglet
         self.pages = {
             "Driver": CHAUFFEUR_VIEW(parent=self),
+            "Add Images": IMAGE_VIEW(parent=self),
+            "Display Images": DISPLAY_IMAGES(parent=self),
         }
 
         # Créer les onglets
@@ -66,7 +70,9 @@ class MAINWINDOW(QMainWindow):
             self.menu_button.menu().clear()
             for i in range(self.tab_widget.count()):
                 action = self.menu_button.menu().addAction(self.tab_widget.tabText(i))
-                action.triggered.connect(functools.partial(self.tab_widget.setCurrentIndex, i))
+                action.triggered.connect(
+                    functools.partial(self.tab_widget.setCurrentIndex, i)
+                )
 
         super().resizeEvent(event)
 
@@ -74,9 +80,18 @@ class MAINWINDOW(QMainWindow):
         """
         Émet le signal pour retourner à la page de connexion et ferme la fenêtre principale.
         """
-        self.login_signal.emit()
-        self.close()
+        confirmation = QMessageBox.question(
+            self, "Confirmation", " Voulez vous vraiment vous deconnecter?",
+            QMessageBox.Yes | QMessageBox.No
+        )
 
+        if confirmation == QMessageBox.Yes:
+            try:
+
+                self.login_signal.emit()
+                self.close()
+            except  Exception as e:
+                QMessageBox.information(f"Erreur lors de la deconnection {str(e)}")
     def navigate_to(self, page_name):
         """
         Permet de naviguer vers une page spécifique.

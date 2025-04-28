@@ -3,6 +3,7 @@ import os
 from PySide6.QtWidgets import QApplication, QMessageBox
 from Views.home.main_window import MAINWINDOW
 from Views.home.login_page import LOGINWINDOW
+from Views.home.webcam_page import ACCER_WEBCAMERA
 
 if __name__ == "__main__":
     try:
@@ -25,9 +26,11 @@ if __name__ == "__main__":
         # Instanciation des fenêtres
         window = MAINWINDOW()
         login = LOGINWINDOW()
+        webcam=ACCER_WEBCAMERA()
 
         # Connexion des signaux
         login.home_page_signal.connect(window.show)
+        login.webcam_page_signal.connect(webcam.show)
         window.login_signal.connect(login.show)
 
         # Afficher la fenêtre de connexion
