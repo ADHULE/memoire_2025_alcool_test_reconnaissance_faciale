@@ -8,7 +8,7 @@ import re
 from Controllers.chauffeur_controller import CHAUFFEUR_CONTROLLER
 
 
-class CHAUFFEUR_VIEW(QWidget):
+class ENREGISTREMENT_CHAUFFEUR(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Gestion des Chauffeurs")
@@ -181,6 +181,7 @@ class CHAUFFEUR_VIEW(QWidget):
             phone = self.phone_input.layout().itemAt(1).widget().text().strip()
             email = self.email_input.layout().itemAt(1).widget().text().strip()
             numero_permis = self.permis_input.layout().itemAt(1).widget().text().strip()
+            
 
             # Vérification des champs obligatoires
             if not nom or not postnom or not prenom or not phone or not numero_permis:
@@ -199,7 +200,7 @@ class CHAUFFEUR_VIEW(QWidget):
                 return
 
             # Enregistrement du chauffeur
-            self.chauffeur_controller.new_Driver(nom, postnom, prenom, phone, email, numero_permis)
+            self.chauffeur_controller.new_driver(nom, postnom, prenom, phone, email, numero_permis)
             self.show_message("Succès", "Nouveau chauffeur enregistré avec succès.")
 
             # Nettoyage des champs et rechargement de la liste

@@ -32,6 +32,8 @@ if __name__ == "__main__":
         login.home_page_signal.connect(window.show)
         login.webcam_page_signal.connect(webcam.show)
         window.login_signal.connect(login.show)
+        webcam.mainwindow_signal.connect(window.show)
+        
 
         # Afficher la fenêtre de connexion
         login.show()

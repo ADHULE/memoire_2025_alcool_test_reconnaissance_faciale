@@ -7,9 +7,9 @@ import logging
 # Configuration de la journalisation
 logging.basicConfig(level=logging.INFO)
 
-class ModifyPhotoView(QDialog):
+class MODIFIER_IMAGES_PAGE(QDialog):
     def __init__(self, photo_id, parent=None):
-        super(ModifyPhotoView, self).__init__(parent)
+        super(MODIFIER_IMAGES_PAGE, self).__init__(parent)
         self.setWindowTitle("Modifier Photo")
         self.resize(500, 350)
 
@@ -27,7 +27,7 @@ class ModifyPhotoView(QDialog):
         self._load_existing_photo_data()
 
         # Charger la feuille de style pour la personnalisation
-        self.load_stylesheet()
+        # self.load_stylesheet()
 
     def _load_existing_photo_data(self):
         """

@@ -3,9 +3,11 @@ from PySide6.QtCore import *
 import functools
 
 # Importation des différentes pages
-from Views.chauffeur.enregistrer import CHAUFFEUR_VIEW
+from Views.chauffeur.enregistrer import ENREGISTREMENT_CHAUFFEUR
 from Views.image.image_view import IMAGE_VIEW
-from Views.image.display_image import DISPLAY_IMAGES
+from Views.image.photo_display import DISPLAY_IMAGES
+from Views.image.modifier_photo import MODIFIER_IMAGES_PAGE
+from Views.admin.enregistrer import ENREGISTREMENT_ADMIN
 
 
 class MAINWINDOW(QMainWindow):
@@ -23,7 +25,8 @@ class MAINWINDOW(QMainWindow):
 
         # Ajouter les différentes pages à l'onglet
         self.pages = {
-            "Driver": CHAUFFEUR_VIEW(parent=self),
+            "Admin":ENREGISTREMENT_ADMIN(parent=self),
+            "Driver": ENREGISTREMENT_CHAUFFEUR(parent=self),
             "Add Images": IMAGE_VIEW(parent=self),
             "Display Images": DISPLAY_IMAGES(parent=self),
         }
@@ -100,3 +103,10 @@ class MAINWINDOW(QMainWindow):
             self.tab_widget.setCurrentWidget(self.pages[page_name])
         else:
             print(f"Page '{page_name}' non trouvée.")
+
+
+    """__________________________NAVIGATION ENTRE VERS LES PAGES________________________"""
+
+    def open_modify_photo_page(self, id_photo):
+            modifier_photo = MODIFIER_IMAGES_PAGE(id_photo)
+            modifier_photo.exec()

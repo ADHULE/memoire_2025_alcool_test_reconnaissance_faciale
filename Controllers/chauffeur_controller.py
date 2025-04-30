@@ -24,9 +24,9 @@ class CHAUFFEUR_CONTROLLER:
                 email=email,
                 numero_permis=numero_permis,
             )
-            with my_session.begin():
-                my_session.add(new_driver)
-                my_session.refresh(new_driver)
+            my_session.begin()
+            my_session.add(new_driver)
+            my_session.refresh(new_driver)
             return new_driver
         except SQLAlchemyError as e:
             logging.error("Erreur lors de la création du chauffeur: %s", e)
