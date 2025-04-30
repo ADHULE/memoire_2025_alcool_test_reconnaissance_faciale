@@ -1,5 +1,4 @@
 from PySide6.QtWidgets import *
-from PySide6.QtGui import *
 from PySide6.QtCore import *
 from Controllers.chauffeur_controller import CHAUFFEUR_CONTROLLER
 from Controllers.image_controller import IMAGE_CONTROLLER
@@ -7,61 +6,63 @@ from Controllers.image_controller import IMAGE_CONTROLLER
 class IMAGE_VIEW(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("Photos")
-        self.photo_controller = IMAGE_CONTROLLER()
-        self.chauffeur_controller = CHAUFFEUR_CONTROLLER()
+        self.setWindowTitle("Gestion des Photos")
+        self.photo_controller, self.chauffeur_controller = IMAGE_CONTROLLER(), CHAUFFEUR_CONTROLLER()
 
-        self.hboxLayout = QHBoxLayout()
-        self.hboxLayout.setSpacing(20)
+        # **Layout principal**
+        main_layout = QVBoxLayout(self)
 
-        self.leftLayout = self.create_left_layout()
-        self.rightLayout = self.create_right_layout()
+        # **Formulaire Ajout d'Images**
+        self.form_group = QGroupBox("Ajouter une image")
+        self.form_layout = QGridLayout()
 
-        self.hboxLayout.addWidget(self.create_frame(self.leftLayout))
-        self.hboxLayout.addWidget(self.create_frame(self.rightLayout))
-        self.setLayout(self.hboxLayout)
+        self.url_input = self._create_line_edit("Sélectionner une image...")
+        self.select_image_button = self._create_button("Parcourir...", self.browse_image)
+        self.create_button = self._create_button("Créer", self.create_photo)
 
-    def create_left_layout(self):
-        leftLayout = QVBoxLayout()
+        self.form_layout.addWidget(QLabel("URL:"), 0, 0)
+        self.form_layout.addWidget(self.url_input, 0, 1)
+        self.form_layout.addWidget(self.select_image_button, 1, 0, 1, 2)
+        self.form_layout.addWidget(self.create_button, 2, 0, 1, 2)
 
-        title_label = self.create_label("AJOUTER L'IMAGE", object_name="titleLabel")
-        leftLayout.addWidget(title_label)
+        self.form_group.setLayout(self.form_layout)
+        main_layout.addWidget(self.form_group)
 
-        self.label_select_image = self.create_label("Sélectionner une image")
-        self.select_image_button = self.create_button("Parcourir...", self.browse_image)
-        leftLayout.addWidget(self.label_select_image)
-        leftLayout.addWidget(self.select_image_button)
+        # **Liste des Chauffeurs**
+        self.list_group = QGroupBox("Associer une image à un chauffeur")
+        self.list_layout = QVBoxLayout()
 
-        self.label_url = self.create_label("URL")
-        self.url_input = self.create_line_edit()
-        leftLayout.addWidget(self.label_url)
-        leftLayout.addWidget(self.url_input)
+        self.filter_input = self._create_line_edit("Filtrer par nom", self.filter_chauffeurs)
+        self.list_layout.addWidget(self.filter_input)
 
-        self.create_button = self.create_button("Créer", self.create_photo)
-        leftLayout.addWidget(self.create_button)
-
-        return leftLayout
-
-    def create_right_layout(self):
-        rightLayout = QVBoxLayout()
-
-        self.filter_input = self.create_line_edit("Filtrer par nom")
-        self.filter_input.textChanged.connect(self.filter_chauffeurs)
-        rightLayout.addWidget(self.filter_input)
-
-        self.chauffeur_list_layout, self.scroll_area = self.create_scrollable_area()
-        
-        rightLayout.addWidget(self.scroll_area)
+        self.chauffeur_list_layout, self.scroll_area = self._create_scrollable_area()
+        self.list_layout.addWidget(self.scroll_area)
 
         self.chauffeur_radio_buttons = {}
         self.populate_chauffeur_list()
 
-        return rightLayout
+        self.list_group.setLayout(self.list_layout)
+        main_layout.addWidget(self.list_group)
 
-    def create_scrollable_area(self):
+    def _create_line_edit(self, placeholder=None, callback=None):
+        """Crée un champ de texte avec un placeholder et un callback facultatif."""
+        line_edit = QLineEdit()
+        if placeholder:
+            line_edit.setPlaceholderText(placeholder)
+        if callback:
+            line_edit.textChanged.connect(callback)
+        return line_edit
+
+    def _create_button(self, text, callback):
+        """Crée un bouton lié à une action."""
+        button = QPushButton(text)
+        button.clicked.connect(callback)
+        return button
+
+    def _create_scrollable_area(self):
+        """Crée une zone de liste scrollable."""
         list_widget = QWidget()
         list_layout = QVBoxLayout()
-        list_layout.setAlignment(Qt.AlignTop)
         list_widget.setLayout(list_layout)
 
         scroll_area = QScrollArea()
@@ -70,31 +71,14 @@ class IMAGE_VIEW(QWidget):
 
         return list_layout, scroll_area
 
-    def create_label(self, text, object_name=None):
-        label = QLabel(text)
-        if object_name:
-            label.setObjectName(object_name)
-        return label
-
-    def create_line_edit(self, placeholder=None):
-        line_edit = QLineEdit()
-        if placeholder:
-            line_edit.setPlaceholderText(placeholder)
-        return line_edit
-
-    def create_button(self, text, callback):
-        button = QPushButton(text)
-        button.clicked.connect(callback)
-        return button
-
     def browse_image(self):
-        file_path, _ = QFileDialog.getOpenFileName(
-            self, "Sélectionner une image", "", "Images (*.png *.jpg *.jpeg *.bmp *.gif)"
-        )
+        """Ouvre une boîte de dialogue pour sélectionner une image."""
+        file_path, _ = QFileDialog.getOpenFileName(self, "Sélectionner une image", "", "Images (*.png *.jpg *.jpeg *.bmp *.gif)")
         if file_path:
             self.url_input.setText(file_path)
 
     def populate_chauffeur_list(self, chauffeurs=None):
+        """Ajoute les chauffeurs à la liste radio."""
         if chauffeurs is None:
             chauffeurs = self.chauffeur_controller.get_all_drivers()
 
@@ -104,49 +88,28 @@ class IMAGE_VIEW(QWidget):
                 widget.deleteLater()
 
         self.chauffeur_radio_buttons.clear()
-
         for chauffeur in chauffeurs:
             radio_button = QRadioButton(f"{chauffeur.nom} {chauffeur.prenom}")
             self.chauffeur_list_layout.addWidget(radio_button)
             self.chauffeur_radio_buttons[chauffeur.id] = radio_button
 
     def filter_chauffeurs(self, filter_text):
+        """Filtre les chauffeurs selon le texte entré."""
         chauffeurs = self.chauffeur_controller.get_all_drivers()
-        filtered_chauffeurs = [
-            chauffeur
-            for chauffeur in chauffeurs
-            if filter_text.lower() in f"{chauffeur.nom} {chauffeur.prenom}".lower()
-        ]
+        filtered_chauffeurs = [c for c in chauffeurs if filter_text.lower() in f"{c.nom} {c.prenom}".lower()]
         self.populate_chauffeur_list(filtered_chauffeurs)
 
     def create_photo(self):
+        """Ajoute une image associée à un chauffeur."""
         file_path = self.url_input.text()
-        personne_id = next(
-            (
-                chauffeur_id
-                for chauffeur_id, radio_button in self.chauffeur_radio_buttons.items()
-                if radio_button.isChecked()
-            ),
-            None,
-        )
+        personne_id = next((id for id, radio in self.chauffeur_radio_buttons.items() if radio.isChecked()), None)
 
         if file_path and personne_id:
             try:
                 photo = self.photo_controller.add_photo(file_path, personne_id)
-                if photo:
-                    QMessageBox.information(self, "Succès", "Photo ajoutée avec succès.")
-                else:
-                    QMessageBox.warning(self, "Avertissement", "Échec de l'ajout de la photo.")
+                msg = "Photo ajoutée avec succès." if photo else "Échec de l'ajout de la photo."
+                QMessageBox.information(self, "Résultat", msg)
             except Exception as e:
-                QMessageBox.critical(self, "Erreur", f"Erreur lors de l'ajout de la photo : {e}")
+                QMessageBox.critical(self, "Erreur", f"Problème lors de l'ajout : {e}")
         else:
-            QMessageBox.warning(self, "Avertissement", "Veuillez sélectionner une image et un chauffeur.")
-
-    def create_frame(self, layout):
-        frame = QFrame()
-        frame.setObjectName("forme_frame")
-        frame.setLayout(layout)
-        frame.setFrameShape(QFrame.StyledPanel)
-        frame.setFrameShadow(QFrame.Raised)
-        frame.setLineWidth(1)
-        return frame
+            QMessageBox.warning(self, "Avertissement", "Sélectionnez une image et un chauffeur.")

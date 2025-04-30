@@ -1,120 +1,49 @@
-/* Style général pour la fenêtre principale */
-QMainWindow {
-    /* background: url("Images/background.jpg") no-repeat center center fixed; */
-    background-color: rgba(139, 69, 19, 0.8);
-
-    background-size: cover;
-    color: #ecf0f1;
-}
-
-/* Style des cadres (QFrame) */
-QFrame {
-    border: 1px solid rgba(255, 255, 255, 0.15); /* Légère bordure pour délimiter */
+/* 🔹 Conteneur principal */
+#main_frame {
+    background-color: #1e1e2e; /* Fond bleu foncé futuriste */
+    padding: 15px;
     border-radius: 10px;
 }
 
-/* Cadre du titre */
-QFrame#titleFrame {
-    background-color: rgba(255, 0, 0, 0.1); /* Rouge léger pour refléter le danger */
+/* 🔹 Contenu */
+#content_frame {
+    border: 2px solid #00aaff;
+    padding: 15px;
     border-radius: 10px;
-    padding: 20px;
-    margin-bottom: 20px;
 }
 
-/* Cadre du formulaire */
-QFrame#formFrame {
-    background-color: rgba(0, 0, 255, 0.1); /* Bleu léger pour refléter la sobriété */
+/* 🔹 Frames de sections */
+#section_frame {
+    border: 2px solid #00aaff;
+    padding: 10px;
     border-radius: 10px;
-    padding: 20px;
-    margin-bottom: 20px;
 }
 
-/* Cadre des boutons */
-QFrame#buttonFrame {
-    background-color: rgba(0, 255, 0, 0.1); /* Vert léger pour refléter l'action positive */
+/* 🔹 Images */
+#image_section {
+    padding: 10px;
     border-radius: 10px;
-    padding: 20px;
 }
 
-/* Style des labels */
-QLabel {
-    color: #ecf0f1;
-    font-size: 14px;
-}
-
-QLabel#title {
-    font-size: 24px;
-    font-weight: bold;
-    text-align: center;
-    color: #e74c3c; /* Rouge pour attirer l'attention */
-}
-
-/* Style des champs de saisie */
+/* 🔹 Champs de texte */
 QLineEdit {
-    background-color: rgba(255, 255, 255, 0.2);
-    border: 1px solid #3498db;
-    border-radius: 5px;
     padding: 8px;
-    color: #ecf0f1;
-}
-
-QLineEdit:focus {
-    border: 2px solid #2980b9;
-}
-
-/* Style des boutons */
-QPushButton {
-    background-color: #3498db;
-    border: none;
+    border: 2px solid #00aaff;
     border-radius: 5px;
-    padding: 10px 20px;
-    color: #ecf0f1;
+    background-color: #2b2b3b;
+    color: white;
+}
+
+/* 🔹 Boutons */
+QPushButton {
+    padding: 10px;
+    font-size: 16px;
     font-weight: bold;
+    border-radius: 5px;
+    background-color: #ff0033;
+    color: white;
 }
 
 QPushButton:hover {
-    background-color: #2980b9;
-}
-
-QPushButton#cancelButton {
-    background-color: #e74c3c;
-}
-
-QPushButton#cancelButton:hover {
-    background-color: #c0392b;
-}
-
-/* Style des logos */
-QLabel#leftLogo, QLabel#rightLogo {
-    width: 100px; /* Augmentation de la taille pour plus de visibilité */
-    height: 100px;
-    border-radius: 50%;
-    background-color: rgba(255, 255, 255, 0.2); /* Fond léger pour contraste */
-}
-
-QLabel#leftLogo {
-    background: url("Images/okapi_ivresse.jpg") no-repeat center center;
-    background-size: cover;
-}
-
-QLabel#rightLogo {
-    background: url("Images/ivresse_volant.jpg") no-repeat center center;
-    background-size: cover;
-}
-
-/* Style des boutons de contrôle caméra */
-QPushButton#startCameraButton {
-    background-color: #27ae60; /* Vert pour démarrer */
-}
-
-QPushButton#startCameraButton:hover {
-    background-color: #2ecc71;
-}
-
-QPushButton#stopCameraButton {
-    background-color: #e74c3c; /* Rouge pour arrêter */
-}
-
-QPushButton#stopCameraButton:hover {
-    background-color: #c0392b;
+    background-color: #ff3344;
 }

@@ -1,333 +1,125 @@
 from PySide6.QtWidgets import *
-from PySide6.QtGui import *
 from PySide6.QtCore import *
-
-import re
-
-# importation des controllers
 from Controllers.chauffeur_controller import CHAUFFEUR_CONTROLLER
-
 
 class ENREGISTREMENT_CHAUFFEUR(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Gestion des Chauffeurs")
-        self.parent = parent
-        self.left_layout = QVBoxLayout()
-        self.right_layout = QVBoxLayout()
-        self.central_layout = QHBoxLayout()
-
-        # Initialiser le QListView et QStandardItemModel
-        self.list_view = QListView()
-        self.list_view.setObjectName("list_view")
-        self.list_model = QStandardItemModel(self.list_view)
-        self.list_view.setModel(self.list_model)
-
-        # Initialisation de contrôleurs
         self.chauffeur_controller = CHAUFFEUR_CONTROLLER()
 
-        self.builded_UI()
-        self.load_initial_data()  # Charger les données au démarrage
+        # Layout principal
+        self.main_layout = QVBoxLayout(self)
 
-    def builded_UI(self):
-        # Ajout des blocs gauche et droit (VLayout) dans une fenêtre (Frame), tous dans le bloc central (HLayout)
-        self.central_layout.addWidget(self.create_frame(self.setup_left_layout()))
-        self.central_layout.addWidget(self.create_frame(self.setup_right_layout()))
-        self.setLayout(self.central_layout)
+        # **Formulaire d'enregistrement**
+        self.form_group = QGroupBox("Informations du Chauffeur")
+        self.form_layout = QGridLayout()
+        self.fields = {
+            "nom": QLineEdit(),
+            "postnom": QLineEdit(),
+            "prenom": QLineEdit(),
+            "telephone": QLineEdit(),
+            "email": QLineEdit(),
+            "numero_permis": QLineEdit(),
+        }
 
-    def setup_left_layout(self):
-        title_label = QLabel("ENREGISTRER LES CHAUFFEURS")
-        title_label.setObjectName("titleLabel")
-        self.left_layout.addWidget(title_label)
+        for i, (label, field) in enumerate(self.fields.items()):
+            self.form_layout.addWidget(QLabel(f"{label.capitalize()}:"), i, 0)
+            self.form_layout.addWidget(field, i, 1)
 
-        self.left_layout.addStretch()
+        self.enregistrer_button = QPushButton("Enregistrer", clicked=self._enregistrer_chauffeur)
+        self.form_layout.addWidget(self.enregistrer_button, len(self.fields), 0, 1, 2)
 
-        self.nom_input = self.create_line_edit(
-            self.create_label("Nom"), "Nom du chauffeur..."
-        )
-        self.left_layout.addWidget(self.nom_input)
+        self.form_group.setLayout(self.form_layout)
+        self.main_layout.addWidget(self.form_group)
 
-        self.postnom_input = self.create_line_edit(
-            self.create_label("Post-Nom"), "Post-nom du chauffeur..."
-        )
-        self.left_layout.addWidget(self.postnom_input)
+        # **Zone de recherche et liste des chauffeurs**
+        self.list_group = QGroupBox("Liste des Chauffeurs")
+        self.list_layout = QVBoxLayout()
 
-        self.prenom_input = self.create_line_edit(
-            self.create_label("Prénom"), "Prénom du chauffeur..."
-        )
-        self.left_layout.addWidget(self.prenom_input)
+        self.search_input = QLineEdit(placeholderText="Rechercher...")
+        self.search_input.textChanged.connect(self._filter_chauffeur)
+        self.list_layout.addWidget(self.search_input)
 
-        self.phone_input = self.create_line_edit(
-            self.create_label("Numéro de téléphone"),
-            "Numéro de téléphone du chauffeur...",
-        )
-        self.left_layout.addWidget(self.phone_input)
+        self.list_view = QListWidget()
+        self.list_layout.addWidget(self.list_view)
+        self.list_group.setLayout(self.list_layout)
 
-        self.email_input = self.create_line_edit(
-            self.create_label("Email"), "Email du chauffeur..."
-        )
-        self.left_layout.addWidget(self.email_input)
+        self.main_layout.addWidget(self.list_group)
 
-        self.permis_input = self.create_line_edit(
-            self.create_label("Numéro de permis"), "Numéro du permis de conduire..."
-        )
-        self.left_layout.addWidget(self.permis_input)
+        self.refresh_button = QPushButton("Rafraîchir", clicked=self._load_chauffeurs)
+        self.main_layout.addWidget(self.refresh_button)
 
-        button_layout = self.create_button("Enregistrer", self.enregistrer_chauffeur)
-        self.left_layout.addWidget(button_layout)
+        self._load_chauffeurs()
 
-        self.left_layout.addStretch()
-        return self.left_layout
+    def _show_message(self, title, message):
+        QMessageBox.information(self, title, message)
 
-    def setup_right_layout(self):
-        layout = QVBoxLayout()
+    def _enregistrer_chauffeur(self):
+        """Enregistre un chauffeur après validation."""
+        data = {key: field.text().strip() for key, field in self.fields.items()}  
 
-        self.search_input_container = self.create_line_edit_with_label(
-            "Rechercher un chauffeur par...",
-            "Entrez un mot clé...",
-        )
-        layout.addWidget(self.search_input_container)
-        self.search_input_line_edit = self.search_input_container.findChild(QLineEdit)
-        if self.search_input_line_edit:
-            self.search_input_line_edit.textChanged.connect(self.filter_chauffeur)
-        else:
-            print("Erreur: Impossible de trouver le QLineEdit dans le widget de recherche.")
+        if not all(data.values()) or not data["telephone"].isdigit():
+            self._show_message("Erreur", "Tous les champs doivent être remplis correctement.")
+            return
 
-        layout.addWidget(self.list_view)
-        self.list_view.selectionModel().selectionChanged.connect(self.on_item_selection_changed)
+        if self.chauffeur_controller.new_driver(**data):  
+            self._show_message("Succès", "Chauffeur enregistré avec succès.")
+            self._load_chauffeurs()
 
-        refresh_button = QPushButton("Rafraîchir")
-        refresh_button.clicked.connect(self.load_chauffeurs)
-        layout.addWidget(refresh_button)
-
-        return layout
-
-    def create_label(self, text, object_name=None):
-        label = QLabel(text)
-        label.adjustSize()
-        label.setWordWrap(True)
-        if object_name:
-            label.setObjectName(object_name)
-        return label
-
-    def create_line_edit(self, label, placeholdertext=None, object_name=None):
-        widget = QWidget()
-        layout = QVBoxLayout()
-        line_edit = QLineEdit()
-        line_edit.setPlaceholderText(placeholdertext)
-        line_edit.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-
-        layout.addWidget(label)
-        layout.addWidget(line_edit)
-        widget.setLayout(layout)
-        return widget
-
-    def create_line_edit_with_label(self, label_text, placeholdertext=None, object_name=None):
-        widget = QWidget()
-        layout = QVBoxLayout()
-        label = QLabel(label_text)
-        line_edit = QLineEdit()
-        line_edit.setPlaceholderText(placeholdertext)
-        line_edit.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-
-        layout.addWidget(label)
-        layout.addWidget(line_edit)
-        widget.setLayout(layout)
-
-        if object_name:
-            line_edit.setObjectName(object_name)
-
-        return widget
-
-    def create_button(self, text, callback):
-        button = QPushButton(text)
-        layout = QHBoxLayout()
-        layout.addStretch()
-        layout.addWidget(button)
-        layout.addStretch()
-
-        button.clicked.connect(callback)
-
-        widget = QWidget()
-        widget.setLayout(layout)
-        return widget
-
-    def create_frame(self, layout):
-        frame = QFrame()
-        frame.setObjectName("forme_frame")
-        frame.setLayout(layout)
-        frame.setFrameShape(QFrame.StyledPanel)
-        frame.setFrameShadow(QFrame.Raised)
-        frame.setLineWidth(1)
-        return frame
-
-    def show_message(self, title, message):
-        msg_box = QMessageBox()
-        msg_box.setWindowTitle(title)
-        msg_box.setText(message)
-        msg_box.setIcon(
-            QMessageBox.Information if title == "Succès" else QMessageBox.Critical
-        )
-        msg_box.exec()
-
-    """_____________________________MANIPULATIONS DES DONNEES__________________________________"""
-
-    def enregistrer_chauffeur(self):
+    def _load_chauffeurs(self):
+        """Charge et affiche la liste des chauffeurs avec les boutons Modifier et Supprimer."""
+        self.list_view.clear()
         try:
-            # Récupération des valeurs des champs
-            nom = self.nom_input.layout().itemAt(1).widget().text().strip()
-            postnom = self.postnom_input.layout().itemAt(1).widget().text().strip()
-            prenom = self.prenom_input.layout().itemAt(1).widget().text().strip()
-            phone = self.phone_input.layout().itemAt(1).widget().text().strip()
-            email = self.email_input.layout().itemAt(1).widget().text().strip()
-            numero_permis = self.permis_input.layout().itemAt(1).widget().text().strip()
-            
+            for chauffeur in self.chauffeur_controller.get_all_drivers():
+                widget_item = QWidget()
+                item_layout = QHBoxLayout(widget_item)
 
-            # Vérification des champs obligatoires
-            if not nom or not postnom or not prenom or not phone or not numero_permis:
-                self.show_message("Erreur", "Veuillez compléter tous les champs sauf l'email qui peut rester vide.")
-                return  # Arrêter l'exécution si des champs sont vides
+                item_label = QLabel(f"{chauffeur.nom} {chauffeur.postnom}, {chauffeur.prenom} - Tél: {chauffeur.telephone}, Permis: {chauffeur.numero_permis}")
+                btn_modifier = QPushButton("Modifier")
+                btn_supprimer = QPushButton("Supprimer")
 
-            # Vérification du format du téléphone (doit contenir uniquement des chiffres)
-            if not phone.isdigit():
-                self.show_message("Erreur", "Le numéro de téléphone doit contenir uniquement des chiffres.")
-                return
+                btn_modifier.clicked.connect(lambda _, id=chauffeur.id: self._modify_chauffeur(id))
+                btn_supprimer.clicked.connect(lambda _, id=chauffeur.id: self._delete_chauffeur(id))
 
-            # Vérification du format de l'email (valide mais facultatif)
-            email_pattern = r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$"
-            if email and not re.match(email_pattern, email):
-                self.show_message("Erreur", "L'adresse email n'est pas valide.")
-                return
+                item_layout.addWidget(item_label)
+                item_layout.addWidget(btn_modifier)
+                item_layout.addWidget(btn_supprimer)
+                item_layout.setContentsMargins(5, 5, 5, 5)
 
-            # Enregistrement du chauffeur
-            self.chauffeur_controller.new_driver(nom, postnom, prenom, phone, email, numero_permis)
-            self.show_message("Succès", "Nouveau chauffeur enregistré avec succès.")
-
-            # Nettoyage des champs et rechargement de la liste
-            self.clear_fields()
-            self.load_chauffeurs()
+                container = QListWidgetItem()
+                container.setSizeHint(widget_item.sizeHint())
+                self.list_view.addItem(container)
+                self.list_view.setItemWidget(container, widget_item)
 
         except Exception as e:
-            print("Erreur lors de l'enregistrement du chauffeur:", str(e))
-            self.show_message("Erreur", f"Une erreur s'est produite : {str(e)}")
+            self._show_message("Erreur", f"Erreur de chargement : {str(e)}")
 
-    def clear_fields(self):
-        """Efface le contenu des champs de saisie."""
-        self.nom_input.layout().itemAt(1).widget().clear()
-        self.postnom_input.layout().itemAt(1).widget().clear()
-        self.prenom_input.layout().itemAt(1).widget().clear()
-        self.phone_input.layout().itemAt(1).widget().clear()
-        self.email_input.layout().itemAt(1).widget().clear()
-        self.permis_input.layout().itemAt(1).widget().clear()
-
-    def load_chauffeurs(self):
-        try:
-            chauffeurs = self.chauffeur_controller.get_all_drivers()
-            self.populate_list(chauffeurs)
-        except Exception as e:
-            self.show_message(
-                "Erreur", f"Erreur lors du chargement des chauffeurs : {str(e)}"
-            )
-
-    def populate_list(self, liste_chauffeurs):
-        self.list_model.clear()
-        for chauffeur in liste_chauffeurs:
-            item_text = (
-                f"{chauffeur.nom} {chauffeur.postnom}, {chauffeur.prenom}, "
-                f"Tél: {chauffeur.telephone}, Email: {chauffeur.email if chauffeur.email else 'N/A'}, "
-                f"Permis: {chauffeur.numero_permis}"
-            )
-            item = QStandardItem(item_text)
-
-            layout = QHBoxLayout()
-            layout.addWidget(QLabel(item_text))
-
-            modify_button = QPushButton("Modifier")
-            modify_button.setObjectName("modify_button")
-            modify_button.clicked.connect(
-                lambda _, id=chauffeur.id: self.modify_chauffeur(id)
-            )
-            modify_button.setVisible(False)
-            layout.addWidget(modify_button)
-
-            delete_button = QPushButton("Supprimer")
-            delete_button.setObjectName("delete_button")
-            delete_button.clicked.connect(
-                lambda _, id=chauffeur.id: self.delete_chauffeur(id)
-            )
-            delete_button.setVisible(False)
-            layout.addWidget(delete_button)
-
-            layout.addStretch()
-            container_widget = QWidget()
-            container_widget.setLayout(layout)
-
-            item.setSizeHint(container_widget.sizeHint())
-            self.list_model.appendRow(item)
-            self.list_view.setIndexWidget(item.index(), container_widget)
-
-    def on_item_selection_changed(self, selected, deselected):
-        for index in selected.indexes():
-            item_widget = self.list_view.indexWidget(index)
+    def _filter_chauffeur(self):
+        """Filtre la liste des chauffeurs."""
+        search_text = self.search_input.text().strip().lower()
+        for i in range(self.list_view.count()):
+            item_widget = self.list_view.itemWidget(self.list_view.item(i))
             if item_widget:
-                modify_button = item_widget.findChild(QPushButton, "modify_button")
-                delete_button = item_widget.findChild(QPushButton, "delete_button")
-                if modify_button and delete_button:
-                    modify_button.setVisible(True)
-                    delete_button.setVisible(True)
+                item_label = item_widget.findChild(QLabel)
+                item_widget.setVisible(search_text in item_label.text().lower())
 
-        for index in deselected.indexes():
-            item_widget = self.list_view.indexWidget(index)
-            if item_widget:
-                modify_button = item_widget.findChild(QPushButton, "modify_button")
-                delete_button = item_widget.findChild(QPushButton, "delete_button")
-                if modify_button and delete_button:
-                    modify_button.setVisible(False)
-                    delete_button.setVisible(False)
-
-    def modify_chauffeur(self, chauffeur_id):
+    def _modify_chauffeur(self, chauffeur_id):
+        """Ouvre la fenêtre de modification du chauffeur."""
         try:
             self.parent.open_modify_chauffeur_page(chauffeur_id)
         except AttributeError:
-            self.show_message("Erreur", "La fenêtre de modification n'est pas implémentée dans la fenêtre parente.")
+            self._show_message("Erreur", "La fenêtre de modification n'est pas implémentée.")
         except Exception as e:
-            self.show_message(
-                "Erreur",
-                f"Erreur lors de la modification du chauffeur : {type(e).__name__} - {str(e)}",
-            )
+            self._show_message("Erreur", f"Erreur lors de la modification du chauffeur : {str(e)}")
 
-    def delete_chauffeur(self, chauffeur_id):
-        reply = QMessageBox.question(
-            self,
-            "Confirmation",
-            "Voulez-vous vraiment supprimer ce chauffeur ?",
-            QMessageBox.Yes | QMessageBox.No,
-            QMessageBox.No,
-        )
+    def _delete_chauffeur(self, chauffeur_id):
+        """Supprime un chauffeur avec confirmation."""
+        reply = QMessageBox.question(self, "Confirmation", "Voulez-vous vraiment supprimer ce chauffeur ?", QMessageBox.Yes | QMessageBox.No)
         if reply == QMessageBox.Yes:
             try:
                 self.chauffeur_controller.delete_driver(chauffeur_id)
-                self.show_message("Succès", "Chauffeur supprimé avec succès.")
-                self.load_chauffeurs()
+                self._show_message("Succès", "Chauffeur supprimé avec succès.")
+                self._load_chauffeurs()
             except Exception as e:
-                self.show_message("Erreur", f"Erreur lors de la suppression : {str(e)}")
-
-    def filter_chauffeur(self, search_text):
-        try:
-            chauffeurs = self.chauffeur_controller.get_all_drivers()
-            filtered_chauffeurs = []
-            for chauffeur in chauffeurs:
-                search_string = (
-                    f"{chauffeur.nom} {chauffeur.postnom} {chauffeur.prenom} "
-                    f"{chauffeur.telephone} {chauffeur.email if chauffeur.email else ''} "
-                    f"{chauffeur.numero_permis}".lower()
-                )
-                if search_text.lower() in search_string:
-                    filtered_chauffeurs.append(chauffeur)
-            self.populate_list(filtered_chauffeurs)
-        except Exception as e:
-            self.show_message("Erreur", f"Erreur lors du filtrage : {str(e)}")
-
-    def load_initial_data(self):
-        """Charge les données initiales au démarrage de la vue."""
-        self.load_chauffeurs()
+                self._show_message("Erreur", f"Erreur lors de la suppression : {str(e)}")

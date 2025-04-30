@@ -4,10 +4,12 @@ import functools
 
 # Importation des différentes pages
 from Views.chauffeur.enregistrer import ENREGISTREMENT_CHAUFFEUR
+from Views.chauffeur.modifier import MODIFIER_CHAUFFEUR
 from Views.image.image_view import IMAGE_VIEW
 from Views.image.photo_display import DISPLAY_IMAGES
 from Views.image.modifier_photo import MODIFIER_IMAGES_PAGE
 from Views.admin.enregistrer import ENREGISTREMENT_ADMIN
+from Views.admin.modifier import MODIFIER_ADMIN
 
 
 class MAINWINDOW(QMainWindow):
@@ -109,4 +111,12 @@ class MAINWINDOW(QMainWindow):
 
     def open_modify_photo_page(self, id_photo):
             modifier_photo = MODIFIER_IMAGES_PAGE(id_photo)
+            modifier_photo.exec()
+
+    def open_modify_admin_page(self, admin_id):
+            modifier_photo = MODIFIER_ADMIN(admin_id)
+            modifier_photo.exec()
+
+    def open_modify_chauffeur_page(self, chauffeur_id):
+            modifier_photo = MODIFIER_CHAUFFEUR(chauffeur_id)
             modifier_photo.exec()

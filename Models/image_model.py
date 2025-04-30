@@ -10,3 +10,4 @@ class IMAGE(Base):
 
     personne_id = Column(Integer, ForeignKey('personnes.id'), nullable=False)
     personne = relationship('PERSONNE', back_populates='images')
+    entrainement = relationship("ENTRAINEMENT", back_populates="image")
