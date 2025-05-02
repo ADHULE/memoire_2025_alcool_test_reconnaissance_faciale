@@ -32,6 +32,15 @@ class CHAUFFEUR_CONTROLLER:
             print(f"Erreur de récupération des chauffeurs : {str(e)}")
             return []
 
+    def get_driver_by_id(self, chauffeur_id):
+        """🔹 Récupérer un chauffeur par son identifiant."""
+        try:
+            chauffeur = my_session.query(CHAUFFEUR).filter(CHAUFFEUR.id == chauffeur_id).first()
+            return chauffeur
+        except Exception as e:
+            print(f"Erreur de récupération du chauffeur : {str(e)}")
+            return None
+
     def update_driver(
         self,
         chauffeur_id,

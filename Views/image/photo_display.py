@@ -1,341 +1,316 @@
 import logging
-from PySide6.QtWidgets import *
-from PySide6.QtGui import *
-from PySide6.QtCore import *
-from Controllers.image_controller import IMAGE_CONTROLLER
-from Controllers.chauffeur_controller import CHAUFFEUR_CONTROLLER
-
-import os  # Gestion des fichiers et des répertoires
-import cv2  # Bibliothèque OpenCV pour la vision par ordinateur (utilisée pour le traitement d'image)
-import numpy as np  # Manipulation des tableaux numériques
-from PIL import Image  # Bibliothèque pour manipuler les images
-import threading  # Pour exécuter l'entraînement dans un thread séparé
+import os
+import threading
 import time
+import cv2
+import numpy as np
+from PIL import Image
+from PySide6.QtCore import *
+from PySide6.QtGui import *
+from PySide6.QtWidgets import *
+
+from Controllers.chauffeur_controller import CHAUFFEUR_CONTROLLER
+from Controllers.entrainement_controller import ENTRAINEMENT_CONTROLLER
+from Controllers.image_controller import IMAGE_CONTROLLER
 
 class DISPLAY_IMAGES(QWidget):
-    # Déclaration des signaux pour l'entraînement.
     training_started_signal = Signal()
     training_progress_signal = Signal(int)
     training_completed_signal = Signal(bool, str)
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("Affichage et Entraînement des Photos")
-        self.parent = parent  # Référence vers le parent
+        self.setWindowTitle("Gestion et Entraînement des Photos")
+        self.parent = parent
 
-        # Initialisation des contrôleurs
         self.photo_controller = IMAGE_CONTROLLER()
         self.person_controller = CHAUFFEUR_CONTROLLER()
-
-        # Création du modèle de reconnaissance faciale LBPH.
-        # Pour sauvegarder sous YAML, il suffit d'utiliser l'extension appropriée lors de l'appel à .save().
+        self.entrainement_controller = ENTRAINEMENT_CONTROLLER()
         self.reconnaissance = cv2.face.LBPHFaceRecognizer_create()
+        self.all_photos = []
+        self.save_folder = None  # Variable pour stocker le dossier de sauvegarde sélectionné
+        self.model_file_path = None # Variable pour stocker le chemin du fichier de modèle
 
-        self.all_photos = []  # Stocke toutes les photos chargées
-
-        # Configuration du logger
-        logging.basicConfig(level=logging.DEBUG, format="%(asctime)s - %(levelname)s - %(message)s")
+        logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
         self.logger = logging.getLogger(__name__)
 
-        # Chemin par défaut pour le dossier de sauvegarde
-        self.training_folder = ""
-
-        # Label affichant le dossier de sauvegarde sélectionné
-        self.save_folder_path_label = QLabel("Aucun dossier sélectionné")
-
-        # Construction de l'interface utilisateur
-        self.setLayout(self.setup_ui())
-
-        # Connexion des signaux d'entraînement aux slots dédiés
-        self.training_progress_signal.connect(self.update_training_progress)
-        self.training_completed_signal.connect(self.training_completed)
-
-        # Chargement non bloquant des images
+        self.setup_ui()
         QTimer.singleShot(0, self.load_images_from_controller)
 
     def setup_ui(self):
-        """Configure l'interface utilisateur principale."""
-        main_layout = QHBoxLayout()
+        """Configure l'interface utilisateur moderne et intuitive."""
+        main_layout = QVBoxLayout()
 
-        # Bloc de gauche pour l'affichage des images
-        left_widget = QWidget()
-        left_layout = QVBoxLayout()
+        # Barre d'outils supérieure
+        toolbar_layout = QHBoxLayout()
 
-        # Barre de recherche
         self.search_edit = QLineEdit()
-        self.search_edit.setPlaceholderText("Filtrer par nom, postnom ou prénom")
+        self.search_edit.setPlaceholderText("Rechercher par nom")
         self.search_edit.textChanged.connect(self.filter_images)
-        left_layout.addWidget(self.search_edit)
+        toolbar_layout.addWidget(self.search_edit)
 
-        # Zone d'affichage des images
+        self.refresh_button = QPushButton("Actualiser")
+        self.refresh_button.clicked.connect(self.load_images_from_controller)
+        toolbar_layout.addWidget(self.refresh_button)
+
+        main_layout.addLayout(toolbar_layout)
+
+        # Zone d'affichage des images (Scrollable Grid)
+        self.image_grid_widget = QWidget()
         self.image_grid_layout = QGridLayout()
+        self.image_grid_widget.setLayout(self.image_grid_layout)
+
         self.image_scroll = QScrollArea()
         self.image_scroll.setWidgetResizable(True)
-        image_widget = QWidget()
-        image_widget.setLayout(self.image_grid_layout)
-        self.image_scroll.setWidget(image_widget)
-        left_layout.addWidget(self.image_scroll)
+        self.image_scroll.setWidget(self.image_grid_widget)
+        main_layout.addWidget(self.image_scroll)
 
-        left_widget.setLayout(left_layout)
-
-        # Bloc de droite pour l'entraînement
-        right_widget = QWidget()
-        right_layout = QVBoxLayout()
-        right_layout.addWidget(QLabel("Entraînement des Photos"))
-
-        self.refresh_train_list_button = QPushButton("Actualiser la liste")
-        self.refresh_train_list_button.clicked.connect(self.load_images_from_controller)
-        right_layout.addWidget(self.refresh_train_list_button)
-
-        # Sélection du dossier de sauvegarde
-        select_folder_layout = QHBoxLayout()
-        self.select_folder_button = QPushButton("Sélectionner le dossier de sauvegarde")
-        self.select_folder_button.clicked.connect(self.select_save_folder)
-        select_folder_layout.addWidget(self.select_folder_button)
-        select_folder_layout.addWidget(self.save_folder_path_label)
-        right_layout.addLayout(select_folder_layout)
+        # Barre d'entraînement en bas
+        training_bar_layout = QHBoxLayout()
+        training_bar_layout.addWidget(QLabel("Entraînement:"))
 
         self.training_progress_bar = QProgressBar()
         self.training_progress_bar.setVisible(False)
-        right_layout.addWidget(self.training_progress_bar)
+        training_bar_layout.addWidget(self.training_progress_bar)
+
+        # Label pour afficher le dossier de sauvegarde sélectionné
+        self.selected_folder_label = QLabel("Aucun dossier sélectionné")
+        training_bar_layout.addWidget(self.selected_folder_label)
+
+        self.select_folder_button = QPushButton("Sélectionner le dossier de sauvegarde")
+        self.select_folder_button.clicked.connect(self._select_save_folder) # Utilisation d'une nouvelle méthode interne
+        training_bar_layout.addWidget(self.select_folder_button)
 
         self.start_training_button = QPushButton("Démarrer l'entraînement")
         self.start_training_button.clicked.connect(self.start_training)
         self.start_training_button.setEnabled(False)  # Désactivé initialement
-        right_layout.addWidget(self.start_training_button)
+        training_bar_layout.addWidget(self.start_training_button)
 
-        right_widget.setLayout(right_layout)
+        main_layout.addLayout(training_bar_layout)
 
-        splitter = QSplitter(Qt.Horizontal)
-        splitter.addWidget(left_widget)
-        splitter.addWidget(right_widget)
+        self.setLayout(main_layout)
 
-        main_layout.addWidget(splitter)
-        return main_layout
+        self.training_progress_signal.connect(self.update_training_progress)
+        self.training_completed_signal.connect(self.training_completed)
+
+    def _select_save_folder(self):
+        """Méthode interne pour gérer la sélection du dossier de sauvegarde."""
+        folder = QFileDialog.getExistingDirectory(self, "Sélectionner le dossier de sauvegarde")
+        if folder:
+            self.save_folder = folder
+            self.model_file_path = os.path.join(self.save_folder, "training_data.yml") # Définit le chemin du fichier de modèle
+            self.selected_folder_label.setText(f"Dossier sélectionné: {self.save_folder}") # Rendre le dossier visible
+            self.logger.info(f"Dossier de sauvegarde sélectionné : {self.save_folder}")
+            self.start_training_button.setEnabled(True)  # Activer le bouton une fois le dossier sélectionné
+        else:
+            self.logger.info("Sélection du dossier de sauvegarde annulée.")
+            self.selected_folder_label.setText("Aucun dossier sélectionné") # Mettre à jour le label
+            self.start_training_button.setEnabled(False)
 
     def load_images_from_controller(self):
-        """Charger et afficher toutes les images depuis le contrôleur."""
         try:
             self.all_photos = self.photo_controller.get_all_photos()
-            self.load_images(self.all_photos)
+            self._display_photos(self.all_photos)
         except Exception as e:
-            self.logger.exception("Erreur lors du chargement des images")
+            self.logger.error(f"Erreur lors du chargement des images: {e}")
             self.show_message("Erreur", "Impossible de charger les images.")
 
-    def load_images(self, photos):
-        """Affiche les images avec gestion dynamique du nombre de colonnes."""
+    def _display_photos(self, photos):
         self.clear_layout(self.image_grid_layout)
-        container_width = self.image_scroll.width()
-        image_width = 200
-        columns = max(1, container_width // (image_width + 20))
-
+        columns = 4  # Nombre de colonnes fixes pour une meilleure organisation
         row, col = 0, 0
         for photo in photos:
-            image_widget = self.create_image_widget(photo)
+            image_widget = self._create_photo_item(photo)
             self.image_grid_layout.addWidget(image_widget, row, col)
             col += 1
             if col >= columns:
                 col = 0
                 row += 1
+        self.image_grid_widget.adjustSize()
 
-        self.image_scroll.widget().adjustSize()
+    def _create_photo_item(self, photo):
+        item_widget = QWidget()
+        item_layout = QVBoxLayout()
+        item_widget.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
 
-    def create_image_widget(self, photo):
-        """Crée un widget individuel pour chaque image."""
-        image_widget = QWidget()
-        image_layout = QVBoxLayout()
-
-        pixmap = QPixmap(photo.url).scaled(400, 500, Qt.KeepAspectRatio)
+        pixmap = QPixmap(photo.url).scaled(200, 250, Qt.KeepAspectRatio)
         image_label = QLabel()
         image_label.setPixmap(pixmap)
         image_label.setAlignment(Qt.AlignCenter)
+        item_layout.addWidget(image_label)
 
-        person = self.person_controller.get_driver(photo.personne_id)
-        person_name = f"{person.nom} {person.postnom} {person.prenom}" if person else "Inconnu"
-
-        name_label = QLabel(person_name)
+        person = self.person_controller.get_driver_by_id(photo.personne_id)
+        name_label = QLabel(f"{person.nom} {person.prenom}" if person else "Inconnu")
         name_label.setAlignment(Qt.AlignCenter)
+        item_layout.addWidget(name_label)
 
+        buttons_layout = QHBoxLayout()
         modify_button = QPushButton("Modifier")
         modify_button.clicked.connect(lambda: self.modify_image(photo.id))
-
+        buttons_layout.addWidget(modify_button)
         delete_button = QPushButton("Supprimer")
         delete_button.clicked.connect(lambda: self.delete_image(photo.id))
+        buttons_layout.addWidget(delete_button)
+        item_layout.addLayout(buttons_layout)
 
-        button_layout = QHBoxLayout()
-        button_layout.addWidget(modify_button)
-        button_layout.addWidget(delete_button)
-
-        image_layout.addWidget(image_label)
-        image_layout.addWidget(name_label)
-        image_layout.addLayout(button_layout)
-
-        image_widget.setLayout(image_layout)
-        return image_widget
-
-    def refresh_images(self):
-        """Recharge toutes les images."""
-        self.search_edit.clear()
-        self.load_images(self.all_photos)
+        item_widget.setLayout(item_layout)
+        return item_widget
 
     def filter_images(self, text):
-        """Filtrer les images en fonction du nom, postnom ou prénom."""
         if not text:
-            self.load_images(self.all_photos)
+            self._display_photos(self.all_photos)
             return
-
-        filtered_photos = []
-        for photo in self.all_photos:
-            person = self.person_controller.get_driver(photo.personne_id)
-            if person:
-                full_name = f"{person.nom} {person.postnom} {person.prenom}".lower()
-                if text.lower() in full_name:
-                    filtered_photos.append(photo)
-        self.load_images(filtered_photos)
+        filtered_photos = [
+            p
+            for p in self.all_photos
+            if self.person_controller.get_driver_by_id(p.personne_id)
+            and text.lower()
+            in f"{self.person_controller.get_driver_by_id(p.personne_id).nom} {self.person_controller.get_driver_by_id(p.personne_id).prenom}".lower()
+        ]
+        self._display_photos(filtered_photos)
 
     def modify_image(self, photo_id):
-        """Ouvre une fenêtre pour modifier une image sélectionnée."""
-        self.logger.debug(f"Tentative de modification de l'image avec ID: {photo_id}")
+        self.logger.debug(f"Modification de l'image ID: {photo_id}")
         if self.parent and hasattr(self.parent, 'open_modify_photo_page'):
             self.parent.open_modify_photo_page(photo_id)
         else:
-            self.logger.error("Échec de la modification: self.parent est invalide")
-            self.show_message("Erreur", "Impossible d'accéder à la modification de la photo.")
+            self.logger.error("self.parent invalide pour la modification.")
+            self.show_message("Erreur", "Impossible d'ouvrir la page de modification.")
 
     def delete_image(self, photo_id):
-        """Supprime une image après confirmation."""
         confirmation = QMessageBox.question(
-            self, "Confirmation", "Voulez-vous vraiment supprimer cette image ?",
-            QMessageBox.Yes | QMessageBox.No
+            self, "Confirmation", "Supprimer cette image ?", QMessageBox.Yes | QMessageBox.No
         )
         if confirmation == QMessageBox.Yes:
             try:
                 if self.photo_controller.delete_photo(photo_id):
-                    # Recharge la liste complète des images après suppression.
                     self.load_images_from_controller()
-                    self.show_message("Succès", "Image supprimée avec succès.")
+                    self.show_message("Succès", "Image supprimée.")
                 else:
                     self.show_message("Erreur", "Échec de la suppression.")
             except Exception as e:
-                self.logger.exception("Erreur lors de la suppression d'une image")
-                self.show_message("Erreur", "Erreur lors de la suppression de l'image.")
+                self.logger.error(f"Erreur lors de la suppression de l'image: {e}")
+                self.show_message("Erreur", "Erreur lors de la suppression.")
 
     def clear_layout(self, layout):
-        """Supprime tous les widgets d'un layout."""
         while layout.count():
             item = layout.takeAt(0)
             if widget := item.widget():
                 widget.deleteLater()
 
     def show_message(self, title, message):
-        """Affiche un message d'information ou d'erreur."""
         QMessageBox.information(self, title, message)
 
-    # ----- Fonctions d'entraînement et sauvegarde utilisant YAML -----
-
-    def select_save_folder(self):
-        """Permet à l'utilisateur de choisir un dossier de sauvegarde."""
-        folder = QFileDialog.getExistingDirectory(None, "Sélectionner un dossier de sauvegarde", "")
-        if folder:
-            self.training_folder = folder
-            self.save_folder_path_label.setText(f"Dossier sélectionné : {self.training_folder}")
-            self.start_training_button.setEnabled(True)
-        else:
-            QMessageBox.warning(None, "Avertissement", "Aucun dossier sélectionné!")
-            self.training_folder = ""
-            self.save_folder_path_label.setText("Aucun dossier sélectionné")
-            self.start_training_button.setEnabled(False)
-
     def get_training_data(self):
-        """
-        Récupère les images et leurs identifiants pour l'entraînement.
-        Chaque image est chargée, convertie en niveaux de gris et redimensionnée en 200x200 pixels
-        afin d'obtenir une entrée uniforme pour le modèle.
-        """
-        photos = self.photo_controller.get_all_photos()
-        if not photos:
-            raise ValueError("Aucune photo disponible pour l'entraînement.")
-
-        faces, ids = [], []
-        for photo in photos:
-            image_path, person_id = photo.url, photo.personne_id
-            if os.path.exists(image_path):
-                try:
-                    image = Image.open(image_path).convert("L")
-                    image = image.resize((200, 200))
-                    face_np = np.array(image, np.uint8)
-                    faces.append(face_np)
-                    ids.append(person_id)
-                except Exception as e:
-                    self.logger.error(f"Erreur lors du traitement de l'image {image_path}: {e}")
-            else:
-                self.logger.warning(f"Fichier introuvable: {image_path}")
+        faces = []
+        ids = []
+        for photo in self.all_photos:
+            try:
+                img = cv2.imread(photo.url)
+                if img is not None:
+                    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+                    faces.append(gray)
+                    ids.append(photo.personne_id)
+                else:
+                    self.logger.warning(f"Impossible de lire l'image pour l'entraînement: {photo.url}")
+            except Exception as e:
+                self.logger.error(f"Erreur de traitement de l'image pour l'entraînement {photo.url}: {e}")
         return np.array(ids), faces
 
-    def train_model(self):
-        """
-        Méthode exécutée dans un thread qui effectue la montée en charge de la barre de progression
-        en deux phases :
-          - Phase 1 (0-50%) : Prétraitement des images.
-          - Phase 2 (50-90%) : Entraînement effectif du modèle.
-        À la fin, le modèle est sauvegardé au format YAML grâce à la méthode `save` de lbph.
-        """
-        try:
-            ids, faces = self.get_training_data()
-            num_images = len(faces)
-            if num_images == 0:
-                self.training_completed_signal.emit(False, "Aucune image détectée pour l'entraînement.")
-                return
-
-            self.training_started_signal.emit()
-
-            # Phase 1 : Prétraitement (progression 0 à 50%)
-            for i in range(num_images):
-                time.sleep(0.1)  # Simulation d'un délai de traitement
-                progress = int((i + 1) / num_images * 50)
-                self.training_progress_signal.emit(progress)
-
-            # Entraînement effectif du modèle
-            self.reconnaissance.train(faces, ids)
-
-            # Phase 2 : Simulation de progression pendant l'entraînement (50 à 90%)
-            for step in range(1, 11):
-                time.sleep(0.1)
-                progress = 50 + int(step * 4)  # Progression de 54 à 90%
-                self.training_progress_signal.emit(progress)
-
-            # Sauvegarde du modèle au format YAML
-            save_path = os.path.join(self.training_folder, "trainingdata.yml")
-            self.reconnaissance.save(save_path)
-            self.training_completed_signal.emit(True, f"Modèle entraîné et sauvegardé dans {save_path}")
-
-        except Exception as e:
-            self.logger.exception("Erreur lors de l'entraînement du modèle")
-            self.training_completed_signal.emit(False, f"Erreur lors de l'entraînement: {e}")
-        finally:
-            self.training_progress_signal.emit(100)
-
     def start_training(self):
-        """Démarre l'entraînement dans un thread séparé."""
-        if not self.training_folder:
-            QMessageBox.warning(None, "Avertissement", "Sélectionnez un dossier de sauvegarde avant l'entraînement!")
+        if not self.save_folder:
+            self.show_message("Avertissement", "Veuillez sélectionner un dossier de sauvegarde avant de démarrer l'entraînement.")
             return
+
+        if os.path.exists(self.model_file_path):
+            reply = QMessageBox.question(
+                self,
+                "Confirmation",
+                "Un fichier d'entraînement existant a été trouvé. Voulez-vous le mettre à jour ?\nSi non, veuillez sélectionner un autre dossier.",
+                QMessageBox.Yes | QMessageBox.No,
+                QMessageBox.No
+            )
+            if reply == QMessageBox.No:
+                self._select_save_folder() # Permettre à l'utilisateur de sélectionner un autre dossier
+                return
 
         self.training_progress_bar.setValue(0)
         self.training_progress_bar.setVisible(True)
         self.start_training_button.setEnabled(False)
+        threading.Thread(target=self._train_model).start()
 
-        self.training_thread = threading.Thread(target=self.train_model)
-        self.training_thread.start()
+    def _train_model(self):
+        try:
+            ids, faces = self.get_training_data()
+            if not faces:
+                self.training_completed_signal.emit(False, "Aucune image de visage trouvée pour l'entraînement.")
+                return
+
+            self.training_started_signal.emit()
+            num_faces = len(faces)
+            for i, face in enumerate(faces):
+                if face is not None and face.size > 0:
+                    pass  # L'entraînement se fait sur toutes les faces en une seule fois
+                progress = int((i + 1) / num_faces * 50)
+                self.training_progress_signal.emit(progress)
+
+            # Tentative de chargement du modèle existant
+            if os.path.exists(self.model_file_path):
+                try:
+                    self.reconnaissance.read(self.model_file_path)
+                    self.logger.info(f"Modèle existant chargé depuis : {self.model_file_path}")
+                    # Entraîner le modèle existant avec les nouvelles données
+                    self.reconnaissance.update(faces, np.array(ids))
+                    self.logger.info("Modèle existant mis à jour avec de nouvelles images.")
+                except Exception as e:
+                    self.logger.error(f"Erreur lors du chargement du modèle existant : {e}")
+                    self.reconnaissance.train(faces, np.array(ids))
+                    self.logger.info("Aucun modèle existant valide trouvé, un nouveau modèle a été entraîné.")
+            else:
+                # Si aucun modèle existant, entraîner un nouveau
+                self.reconnaissance.train(faces, np.array(ids))
+                self.logger.info("Nouveau modèle entraîné.")
+
+            for step in range(1, 51):
+                time.sleep(0.02)
+                self.training_progress_signal.emit(50 + step)
+
+            if self.save_folder:
+                try:
+                    self.reconnaissance.save(self.model_file_path)
+                    self.training_completed_signal.emit(True, f"Modèle entraîné et sauvegardé dans : {self.model_file_path}")
+                    self.logger.info(f"Modèle entraîné et sauvegardé dans : {self.model_file_path}")
+                except Exception as e:
+                    error_message = f"Erreur lors de la sauvegarde du modèle dans le dossier sélectionné : {e}"
+                    self.logger.error(error_message)
+                    self.training_completed_signal.emit(False, error_message)
+            else:
+                self.training_completed_signal.emit(False, "Aucun dossier de sauvegarde sélectionné.")
+
+        except Exception as e:
+            self.logger.error(f"Erreur lors de l'entraînement du modèle: {e}")
+            self.training_completed_signal.emit(False, f"Erreur d'entraînement: {e}")
+        finally:
+            self.training_progress_signal.emit(100)
+            QMetaObject.invokeMethod(self, "reset_training_ui", Qt.QueuedConnection)
 
     @Slot(int)
     def update_training_progress(self, progress):
-        """Met à jour la barre de progression pendant l'entraînement."""
         self.training_progress_bar.setValue(progress)
 
     @Slot(bool, str)
     def training_completed(self, success, message):
-        """Méthode appelée à la fin de l'entraînement."""
         self.training_progress_bar.setVisible(False)
         self.start_training_button.setEnabled(True)
         self.show_message("Entraînement", message)
+        if success:
+            self.logger.info("Entraînement réussi.")
+        else:
+            self.logger.error(f"Échec de l'entraînement: {message}")
+
+    @Slot()
+    def reset_training_ui(self):
+        self.training_progress_bar.setVisible(False)
+        self.training_progress_bar.setValue(0)
+        self.start_training_button.setEnabled(self.save_folder is not None)
+
