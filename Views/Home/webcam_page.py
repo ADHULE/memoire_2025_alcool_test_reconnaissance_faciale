@@ -21,7 +21,6 @@ class ACCER_WEBCAMERA(QMainWindow):
         super().__init__()
 
         self.setWindowTitle("ACCEDER A LA CAMERA ET RECONNAISSANCE FACIALE")
-        self.setMinimumSize(600, 400)  # Taille minimale augmentée
         self.screen = QApplication.primaryScreen().availableGeometry()
         self.is_maximized = False
 

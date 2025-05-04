@@ -128,6 +128,7 @@ class DISPLAY_IMAGES(QWidget):
                 row += 1
         self.image_grid_widget.adjustSize()
 
+        
     def _create_photo_item(self, photo):
         item_widget = QWidget()
         item_layout = QVBoxLayout()
