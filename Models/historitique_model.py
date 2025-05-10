@@ -9,7 +9,5 @@ class HISTORIQUE(Base):
     chauffeur_id = Column(Integer, ForeignKey('chauffeurs.id'), nullable=False)
     jour_heure = Column(DateTime, nullable=False)
     event_type = Column(String(50), nullable=False)
-    result = Column(String(50), nullable=True)
-    commentaire = Column(Text, nullable=True)
-
+   
     chauffeur = relationship("CHAUFFEUR", back_populates="historiques")

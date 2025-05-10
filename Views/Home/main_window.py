@@ -10,6 +10,7 @@ from Views.image.photo_display import DISPLAY_IMAGES
 from Views.image.modifier_photo import MODIFIER_IMAGES_PAGE
 from Views.admin.enregistrer import ENREGISTREMENT_ADMIN
 from Views.admin.modifier import MODIFIER_ADMIN
+from Views.historique.display_history import DISPLAY_HISTORY
 
 
 class MAINWINDOW(QMainWindow):
@@ -31,6 +32,8 @@ class MAINWINDOW(QMainWindow):
             "Driver": ENREGISTREMENT_CHAUFFEUR(parent=self),
             "Add Images": IMAGE_VIEW(parent=self),
             "Display Images": DISPLAY_IMAGES(parent=self),
+            "Display History":DISPLAY_HISTORY(parent=self)
+                
         }
 
         # Créer les onglets

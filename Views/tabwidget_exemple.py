@@ -11,7 +11,7 @@ class MainWindow(QMainWindow):
 
         self.tab_widget = QTabWidget()
         self.setCentralWidget(self.tab_widget)
-        self.load_stylesheet()
+        # self.load_stylesheet()
         for tab_name in ["Tab 1", "Tab 2", "Tab 3"]:
             tab = QWidget()
             layout = QVBoxLayout()

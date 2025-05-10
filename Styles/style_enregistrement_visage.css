@@ -1,0 +1,102 @@
+QWidget {
+    background-color: #8d410f; /* Brun chaud */
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 14px;
+    color: #f0f0f0; /* Gris très clair pour le texte, contraste avec le brun */
+}
+
+QGroupBox {
+    border: 2px solid #a65926; /* Brun légèrement plus clair */
+    border-radius: 5px;
+    margin-top: 10px;
+    padding: 10px;
+    font-weight: bold;
+    color: #f0f0f0;
+}
+
+QGroupBox::title {
+    left: 10px;
+    padding: 0 5px;
+    color: #fff;
+    background-color: #a65926; /* Brun légèrement plus clair */
+    border-radius: 3px;
+}
+
+QLineEdit {
+    padding: 8px;
+    border: 1px solid #c4a38f; /* Brun très clair pour la bordure */
+    border-radius: 4px;
+    background-color: #f8f4f0; /* Beige très clair pour le fond */
+    selection-background-color: #d2b48c; /* Brun clair pour la sélection */
+    selection-color: #333;
+}
+
+QPushButton {
+    background-color: #cc7a00; /* Orange brûlé */
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    padding: 10px 20px;
+    font-weight: bold;
+}
+
+QPushButton:hover {
+    background-color: #a36100; /* Orange brûlé plus foncé au survol */
+}
+
+QPushButton:disabled {
+    background-color: #b3b3b3; /* Gris clair désactivé */
+    color: #666;
+    border: none;
+}
+
+QRadioButton {
+    padding: 5px;
+    color: #f0f0f0;
+}
+
+QRadioButton::indicator {
+    width: 20px;
+    height: 20px;
+}
+
+QRadioButton::indicator::unchecked {
+    border: 2px solid #c4a38f; /* Brun très clair */
+    border-radius: 10px;
+    background-color: #8d410f; /* Fond brun */
+}
+
+QRadioButton::indicator::checked {
+    border: 2px solid #cc7a00; /* Orange brûlé */
+    border-radius: 10px;
+    background-color: #cc7a00;
+}
+
+QScrollArea {
+    border: none;
+    background-color: transparent;
+}
+
+QWidget#scrollAreaWidgetContents {
+    background-color: transparent;
+}
+
+QLabel {
+    color: #f0f0f0;
+}
+
+QMessageBox {
+    background-color: #e6d9c2; /* Beige clair pour les boîtes de message */
+    color: #333;
+    border: 1px solid #c4a38f; /* Bordure brune claire */
+    border-radius: 5px;
+}
+
+QMessageBox QPushButton {
+    background-color: #a65926; /* Brun légèrement plus clair */
+    color: #fff;
+}
+
+QMessageBox QPushButton:hover {
+    background-color: #8d410f; /* Brun chaud au survol */
+}

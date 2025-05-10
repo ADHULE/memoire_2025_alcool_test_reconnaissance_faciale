@@ -1,138 +1,70 @@
 from Models.administrateur_model import ADMINISTRATEUR
 from Models.database_model import my_session
 import logging
-from sqlalchemy import select
-import bcrypt # Importez la bibliothèque bcrypt pour le hachage
+from sqlalchemy.exc import SQLAlchemyError
+import bcrypt
+from datetime import datetime
+
 
 class ADMINISTRATEUR_CONTROLLER:
 
-    def new_administrateur(
-        self,
-        nom: str,
-        postnom: str,
-        prenom: str,
-        telephone: int,
-        email,
-        username: str,
-        password: str,  # Acceptez le mot de passe en clair
-        role: str,
-        created_at,
-        last_login,
-        is_active=False,
-        super_admin=False,
-    ):
+    def new_administrateur(self, username: str, password: str, created_at: datetime, last_login: datetime = None, is_active: bool = True, super_admin: bool = False):
+        """Crée un nouvel administrateur après hachage du mot de passe."""
         try:
-            # Hacher le mot de passe si fourni
-            if password:
-                hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
-            else:
-                # Gérer le cas où aucun mot de passe n'est fourni.
-                # Cela dépend de votre logique d'enregistrement.
-                # Ici, nous levons une ValueError car password_hash ne peut pas être nul.
-                raise ValueError("Le mot de passe doit être fourni pour l'enregistrement.")
+            if not username or not password:
+                raise ValueError(
+                    "Le nom d'utilisateur et le mot de passe sont requis.")
 
+            # Vérifier si l'utilisateur existe déjà
+            if self.get_administrateur_by_username(username):
+                raise ValueError("Ce nom d'utilisateur est déjà utilisé.")
+
+            # Hachage du mot de passe
+            hashed_password = bcrypt.hashpw(password.encode(
+                'utf-8'), bcrypt.gensalt()).decode('utf-8')
+
+            # Création du nouvel administrateur
             new_admin = ADMINISTRATEUR(
-                nom=nom,
-                postnom=postnom,
-                prenom=prenom,
-                telephone=telephone,
-                email=email,
                 username=username,
-                password_hash=hashed_password,  # Utilisez le mot-clé correct
-                role=role,
+                password_hash=hashed_password,
                 created_at=created_at,
                 last_login=last_login,
                 is_active=is_active,
-                super_admin=super_admin,
+                super_admin=super_admin
             )
+
             my_session.add(new_admin)
             my_session.commit()
             my_session.refresh(new_admin)
-            return new_admin
+            return True  # Indiquer le succès de l'enregistrement
+
         except ValueError as ve:
-            logging.error(f"Erreur lors de l'enregistrement de nouveau administrateur: {str(ve)}")
+            logging.error(f"Erreur de validation : {str(ve)}")
             my_session.rollback()
-            return None
-        except Exception as e:
-            logging.error(
-                f"Erreur lors de l'enregistrement de nouveau administrateur: {str(e)}"
-            )
+            return False
+        except SQLAlchemyError as sqle:
+            logging.error(f"Erreur SQL : {str(sqle)}")
             my_session.rollback()
-            return None
-
-    def activate_administrateur(self, admin_id):
-        """Active un administrateur."""
-        admin = my_session.query(ADMINISTRATEUR).get(admin_id)
-        if admin:
-            admin.is_active = True
-            my_session.commit()
-            return True
-        return False
-
-    def get_administrateur_by_id(self, admin_id: int):
-        try:
-            statement = select(ADMINISTRATEUR).where(ADMINISTRATEUR.id == admin_id)
-            administrateur = my_session.execute(statement).scalar_one_or_none()
-            return administrateur
+            return False
         except Exception as e:
-            logging.error(
-                f"Erreur lors de la récupération de l'administrateur avec l'ID {admin_id}: {str(e)}"
-            )
-            return None
+            logging.error(f"Erreur inattendue : {str(e)}")
+            my_session.rollback()
+            return False
 
     def get_administrateur_by_username(self, username: str):
+        """Récupère un administrateur par son nom d'utilisateur."""
         try:
-            statement = select(ADMINISTRATEUR).where(
-                ADMINISTRATEUR.username == username
-            )
-            administrateur = my_session.execute(statement).scalar_one_or_none()
-            return administrateur
+            return my_session.query(ADMINISTRATEUR).filter_by(username=username).first()
         except Exception as e:
             logging.error(
-                f"Erreur lors de la récupération de l'administrateur avec le nom d'utilisateur '{username}': {str(e)}"
-            )
+                f"Erreur lors de la récupération de l'administrateur '{username}' : {str(e)}")
             return None
 
     def get_all_administrateurs(self):
+        """Récupère tous les administrateurs."""
         try:
-            statement = select(ADMINISTRATEUR)
-            administrateurs = my_session.execute(statement).scalars().all()
-            return list(administrateurs)
+            return my_session.query(ADMINISTRATEUR).all()
         except Exception as e:
             logging.error(
-                f"Erreur lors de la récupération de tous les administrateurs: {str(e)}"
-            )
+                f"Erreur lors de la récupération des administrateurs : {str(e)}")
             return []
-
-    def update_administrateur(self, admin_id: int, **kwargs):
-        try:
-            administrateur = self.get_administrateur_by_id(admin_id)
-            if administrateur:
-                for key, value in kwargs.items():
-                    if hasattr(administrateur, key):
-                        setattr(administrateur, key, value)
-                my_session.commit()
-                my_session.refresh(administrateur)
-                return administrateur
-            return None
-        except Exception as e:
-            logging.error(
-                f"Erreur lors de la mise à jour de l'administrateur avec l'ID {admin_id}: {str(e)}"
-            )
-            my_session.rollback()
-            return None
-
-    def delete_administrateur(self, admin_id: int):
-        try:
-            administrateur = self.get_administrateur_by_id(admin_id)
-            if administrateur:
-                my_session.delete(administrateur)
-                my_session.commit()
-                return True
-            return False
-        except Exception as e:
-            logging.error(
-                f"Erreur lors de la suppression de l'administrateur avec l'ID {admin_id}: {str(e)}"
-            )
-            my_session.rollback()
-            return False

@@ -1,10 +1,10 @@
-from sqlalchemy import Column, Integer, String, DateTime, Boolean, ForeignKey
-from .personne_model import PERSONNE
+from sqlalchemy import Column, Integer, String, DateTime, Boolean
+from Models.database_model import Base
 
-class ADMINISTRATEUR(PERSONNE):
+class ADMINISTRATEUR(Base):
     __tablename__ = "administrateurs"
 
-    id = Column(Integer, ForeignKey("personnes.id"), primary_key=True)
+    id = Column(Integer, primary_key=True, autoincrement=True)
     username = Column(String(50), unique=True, nullable=False)
     password_hash = Column(String(128), nullable=False)
     role = Column(String(50), nullable=False, default="administrateur")

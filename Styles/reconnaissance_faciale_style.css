@@ -1,0 +1,43 @@
+QWidget {
+    background-color: #2C3E50;
+    color: #ECF0F1;
+    font-family: "Arial", sans-serif;
+    font-size: 14px;
+}
+
+QLabel {
+    font-size: 16px;
+    font-weight: bold;
+    color: #ECF0F1;
+}
+
+QPushButton {
+    background-color: #3498DB;
+    color: white;
+    font-size: 16px;
+    font-weight: bold;
+    padding: 10px;
+    border-radius: 5px;
+    border: 2px solid #2980B9;
+}
+
+QPushButton:hover {
+    background-color: #2980B9;
+}
+
+QPushButton:disabled {
+    background-color: #95A5A6;
+    color: #BDC3C7;
+}
+
+QMessageBox {
+    background-color: #34495E;
+    color: #ECF0F1;
+    font-size: 14px;
+}
+
+QLabel#video_label {
+    background-color: black;
+    border: 3px solid #1ABC9C;
+    border-radius: 10px;
+}

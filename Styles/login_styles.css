@@ -1,49 +1,30 @@
-/* 🔹 Conteneur principal */
-#main_frame {
-    background-color: #1e1e2e; /* Fond bleu foncé futuriste */
-    padding: 15px;
+#general_frame {
+    background-color: #1A1A2E; /* Bleu nuit pour la technologie et la surveillance */
+    border: 2px solid #0F3460; /* Bordure bleu foncé */
+    padding: 20px;
     border-radius: 10px;
 }
 
-/* 🔹 Contenu */
-#content_frame {
-    border: 2px solid #00aaff;
-    padding: 15px;
-    border-radius: 10px;
-}
-
-/* 🔹 Frames de sections */
 #section_frame {
-    border: 2px solid #00aaff;
-    padding: 10px;
-    border-radius: 10px;
+    background-color: #16213E; /* Bleu foncé pour un effet sérieux */
+    border: 1px solid #0F3460;
+    padding: 15px;
+    border-radius: 8px;
 }
 
-/* 🔹 Images */
-#image_section {
-    padding: 10px;
-    border-radius: 10px;
-}
-
-/* 🔹 Champs de texte */
-QLineEdit {
-    padding: 8px;
-    border: 2px solid #00aaff;
-    border-radius: 5px;
-    background-color: #2b2b3b;
-    color: white;
-}
-
-/* 🔹 Boutons */
-QPushButton {
-    padding: 10px;
-    font-size: 16px;
+QLabel {
+    font-size: 14px;
     font-weight: bold;
-    border-radius: 5px;
-    background-color: #ff0033;
+    color: #E94560; /* Rouge pour indiquer la vigilance */
+}
+
+QPushButton {
+    background-color: #0F3460;
     color: white;
+    padding: 8px;
+    border-radius: 5px;
 }
 
 QPushButton:hover {
-    background-color: #ff3344;
+    background-color: #E94560; /* Rouge lorsque survolé, pour un effet d’alerte */
 }

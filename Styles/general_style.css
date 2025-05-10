@@ -12,12 +12,16 @@ QMainWindow {
 /* --- Panneaux et Widgets Généraux --- */
 QTabWidget::pane {
     /* Fond sombre avec une légère teinte chaotique */
-    background-color: rgba(70, 20, 30, 0.8);
+    /* background-color: rgba(70, 20, 30, 0.8); */
     /* Bordure orange vif pour rappeler l'éclat des néons */
     border: 2px solid #FF8C00;
+
+     background-color: #1A1A2E; /* Bleu nuit pour la technologie et la surveillance */
+    /* border: 2px solid #0F3460; Bordure bleu foncé */
     border-radius: 10px;
     margin: 10px;
 }
+
 
 QListView,
 QDialog {
@@ -91,7 +95,9 @@ QTabBar::tab:hover {
 QPushButton,
 QToolButton {
     /* Boutons en orange vif pour un rendu énergique et une sensation d'urgence */
-    background-color: #FF4500;
+    /* background-color: #FF4500; */
+    background-color: #16213E; /* Bleu foncé pour un effet sérieux */
+    border: 1px solid #0F3460;
     color: #ecf0f1;
     border: none;
     border-radius: 5px;
