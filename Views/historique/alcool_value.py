@@ -1,13 +1,15 @@
 import serial  # Importation de la bibliothèque pour la communication série
+from Views.home.login_page import LOGINWINDOW
 
 class ALCOOL_VALUE:
     SEUIL_ALCOOL = 400  # Seuil défini dans le programme Arduino
 
     def __init__(self):
         super().__init__()
-
+        self.login = LOGINWINDOW()
+        arduino_port_value=self.login._connect_to_arduino
         # Initialisation de la connexion série avec l'Arduino
-        self.arduino = serial.Serial(port='COM3', baudrate=19200, timeout=1)  # Assurez-vous d'ajuster le port COM selon votre système
+        self.arduino = serial.Serial(arduino_port_value)  # Assurez-vous d'ajuster le port COM selon votre système
 
     def lire_donnees(self):
         """Lit la valeur envoyée par l'Arduino et affiche si elle dépasse le seuil."""

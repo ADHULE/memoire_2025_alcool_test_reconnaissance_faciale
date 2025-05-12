@@ -48,6 +48,7 @@ class CameraView(QWidget):
         self.setLayout(main_layout)
         self.timer = QTimer(self)
         self.timer.timeout.connect(self._update_frame)
+        self.load_stylesheet("Styles/webcam_style.css")
 
     def set_chauffeur_id(self, chauffeur_id):
         """Définit l'identifiant du chauffeur associé à la capture."""
@@ -141,3 +142,18 @@ class CameraView(QWidget):
         self.start_button.setEnabled(start)
         self.stop_button.setEnabled(stop)
         self.capture_button.setEnabled(capture)
+
+    def load_stylesheet(self, path: str) -> None:
+        try:
+            with open(path, "r") as file:
+                self.setStyleSheet(file.read())
+        except FileNotFoundError:
+            QMessageBox.warning(
+                self, "Erreur", f"Feuille de style non trouvée : {path}"
+            )
+        except Exception as e:
+            QMessageBox.critical(
+                self,
+                "Erreur Critique",
+                f"Impossible de charger la feuille de style : {e}",
+            )

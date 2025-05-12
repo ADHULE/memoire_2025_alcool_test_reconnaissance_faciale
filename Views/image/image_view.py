@@ -17,11 +17,13 @@ class IMAGE_VIEW(QWidget):
 
         # Sélection du Chauffeur (avant l'ajout)
         self.chauffeur_group = QGroupBox("Sélectionner un chauffeur pour la photo")
+        
         self.chauffeur_layout = QVBoxLayout()
 
         self.filter_chauffeur_input = self._create_line_edit("Filtrer par nom", self.filter_chauffeurs)
         self.chauffeur_layout.addWidget(self.filter_chauffeur_input)
-
+        actualiser_buton=self._create_button("actualiser",self.filter_chauffeurs)
+        self.chauffeur_layout.addWidget(actualiser_buton)
         self.chauffeur_list_layout, self.chauffeur_scroll_area = self._create_scrollable_area()
         self.chauffeur_layout.addWidget(self.chauffeur_scroll_area)
 
