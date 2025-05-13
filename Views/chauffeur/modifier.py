@@ -7,23 +7,30 @@ class MODIFIER_CHAUFFEUR(QDialog):
     def __init__(self, chauffeur_id, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Modifier Chauffeur")
-        self.chauffeur_id, self.chauffeur_controller = chauffeur_id, CHAUFFEUR_CONTROLLER()
-        self.parent = parent
+        self.chauffeur_id = chauffeur_id
+        self.chauffeur_controller = CHAUFFEUR_CONTROLLER()
+        self.parent_widget = parent
 
         # Création des champs
-        self.fields = {name: QLineEdit() for name in ["Nom", "Post-Nom", "Prénom", "Téléphone", "Email", "Numéro de permis"]}
-        self.is_active_checkbox = QCheckBox("Actif")
+        self.fields = {
+            "nom": QLineEdit(),
+            "postnom": QLineEdit(),
+            "prenom": QLineEdit(),
+            "telephone": QLineEdit(),
+            "email": QLineEdit(),
+            "numero_permis": QLineEdit(),
+        }
+        # Suppression du checkbox is_active
 
         # Interface utilisateur
         layout = QVBoxLayout(self)
-        layout.addWidget(QLabel("Modifier Chauffeur", alignment=Qt.AlignCenter))
+        layout.addWidget(QLabel("Modifier Chauffeur", alignment=Qt.AlignmentFlag.AlignCenter))
 
         form_layout = QGridLayout()
         for i, (key, field) in enumerate(self.fields.items()):
-            form_layout.addWidget(QLabel(f"{key}:"), i, 0)
+            form_layout.addWidget(QLabel(f"{key.replace('_', ' ').capitalize()}:"), i, 0)
             form_layout.addWidget(field, i, 1)
 
-        form_layout.addWidget(self.is_active_checkbox, len(self.fields), 1)
         layout.addLayout(form_layout)
 
         # Boutons
@@ -46,11 +53,11 @@ class MODIFIER_CHAUFFEUR(QDialog):
     def _load_chauffeur_data(self):
         """Charge les données du chauffeur."""
         try:
-            chauffeur = self.chauffeur_controller.get_driver(self.chauffeur_id)
+            chauffeur = self.chauffeur_controller.get_driver_by_id(self.chauffeur_id)
             if chauffeur:
                 for key, field in self.fields.items():
-                    field.setText(str(getattr(chauffeur, key.replace(" ", "").lower(), "")))
-                self.is_active_checkbox.setChecked(chauffeur.is_active)
+                    if hasattr(chauffeur, key):
+                        field.setText(str(getattr(chauffeur, key, "")))
             else:
                 self._show_message("Erreur", "Chauffeur non trouvé.")
                 self.close()
@@ -64,19 +71,20 @@ class MODIFIER_CHAUFFEUR(QDialog):
         if not all(data.values()):
             self._show_message("Erreur", "Tous les champs doivent être remplis.")
             return
-        if not data["Téléphone"].isdigit():
+        if not data["telephone"].isdigit():
             self._show_message("Erreur", "Le téléphone doit contenir uniquement des chiffres.")
             return
-        if not re.match(r"^[\w\.-]+@[\w\.-]+\.\w+$", data["Email"]):
+        if not re.match(r"^[\w\.-]+@[\w\.-]+\.\w+$", data["email"]):
             self._show_message("Erreur", "Email invalide.")
             return
 
-        data.update({"chauffeur_id": self.chauffeur_id, "is_active": self.is_active_checkbox.isChecked()})
+        data["chauffeur_id"] = self.chauffeur_id
+        # Suppression de l'ajout de is_active au dictionnaire data
 
         if self.chauffeur_controller.update_driver(**data):
             self._show_message("Succès", "Chauffeur modifié avec succès.")
-            if self.parent:
-                self.parent._load_chauffeurs()
+            if self.parent_widget and hasattr(self.parent_widget, '_load_chauffeurs'):
+                self.parent_widget._load_chauffeurs()
             self.close()
         else:
             self._show_message("Erreur", "Erreur lors de la mise à jour.")
