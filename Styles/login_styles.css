@@ -1,6 +1,7 @@
 #general_frame {
     background-color: #1A1A2E; /* Bleu nuit pour la technologie et la surveillance */
-    border: 2px solid #0F3460; /* Bordure bleu foncé */
+    /* border: 2px solid #0F3460; Bordure bleu foncé */
+    border: 2px solid wheat; /* Bordure bleu foncé */
     padding: 20px;
     border-radius: 10px;
 }
@@ -15,7 +16,7 @@
 QLabel {
     font-size: 14px;
     font-weight: bold;
-    color: #E94560; /* Rouge pour indiquer la vigilance */
+    color: white;
 }
 
 QPushButton {

@@ -22,6 +22,12 @@ class CameraView(QWidget):
         self.face_cascade = cv2.CascadeClassifier("Views/image/haarcascade_frontalface_default.xml")
         self.camera_active = False # Pour suivre l'état de la caméra
 
+        # --- Nouvelle fonctionnalité : Compteur de photos pour l'enregistrement automatique ---
+        self.photo_count_to_capture = 1  # Nombre de photos à capturer spécifié par l'utilisateur
+        self.photos_captured_current_session = 0 # Compteur des photos déjà capturées dans la session
+        self.is_recording_faces = False # Indicateur si l'enregistrement automatique est en cours
+        # --- Fin de la nouvelle fonctionnalité ---
+
         if not os.path.exists(self.output_directory):
             os.makedirs(self.output_directory)
 
@@ -50,16 +56,33 @@ class CameraView(QWidget):
         self.controls_layout.addWidget(self.default_camera_button)
 
         # Séparateur visuel
-       
-        self.start_button = self._create_button("Ouvrir Caméra (Indice 0)", self._start_camera, enabled=True) # L'URL ou la caméra par défaut démarrera la capture
+        
+        self.start_button = self._create_button("Ouvrir Caméra (Indice 0)", self._start_camera, enabled=True)
         self.stop_button = self._create_button("Fermer Caméra", self._stop_camera, enabled=False)
-        self.capture_button = self._create_button("Enregistrer Visage", self._capture_and_save_face, enabled=False)
+        # Bouton pour démarrer l'enregistrement automatique des visages
+        self.start_recording_button = self._create_button("Démarrer Enregistrement Auto", self._start_automatic_face_capture, enabled=False)
+        # Nouveau bouton pour arrêter l'enregistrement automatique
+        self.stop_recording_button = self._create_button("Arrêter Enregistrement Auto", self._stop_automatic_face_capture, enabled=False)
         self.fullscreen_button = self._create_button("Plein Écran", self._toggle_fullscreen)
         self.change_dir_button = self._create_button("Changer Répertoire", self._change_output_directory)
 
+        # --- Nouvelle fonctionnalité : Champs pour le nombre de photos ---
+        self.photo_count_layout = QHBoxLayout()
+        self.photo_count_label = QLabel("Nombre de photos à capturer:")
+        self.photo_count_input = QSpinBox()
+        self.photo_count_input.setMinimum(1)
+        self.photo_count_input.setMaximum(100)
+        self.photo_count_input.setValue(1)
+        self.photo_count_input.valueChanged.connect(self._update_photo_count)
+        self.photo_count_layout.addWidget(self.photo_count_label)
+        self.photo_count_layout.addWidget(self.photo_count_input)
+        self.controls_layout.addLayout(self.photo_count_layout)
+        # --- Fin de la nouvelle fonctionnalité ---
+
         self.controls_layout.addWidget(self.start_button)
         self.controls_layout.addWidget(self.stop_button)
-        self.controls_layout.addWidget(self.capture_button)
+        self.controls_layout.addWidget(self.start_recording_button) # Ajout du nouveau bouton
+        self.controls_layout.addWidget(self.stop_recording_button) # Ajout du nouveau bouton
         self.controls_layout.addWidget(self.fullscreen_button)
         self.controls_layout.addWidget(self.change_dir_button)
         self.controls_layout.addStretch(1)
@@ -119,7 +142,7 @@ class CameraView(QWidget):
             self.capture = None
             self.video_label.clear()
             self.is_capturing = False
-            self._toggle_buttons(start=True, stop=False, capture=False)
+            self._toggle_buttons(start=True, stop=False, start_record=False, stop_record=False)
             return
 
         QMessageBox.information(
@@ -129,7 +152,10 @@ class CameraView(QWidget):
             self.url_input.clear()  # Vider le champ de saisie après la connexion
         self.is_capturing = True
         self.timer.start(30)
-        self._toggle_buttons(start=False, stop=True, capture=True)
+        self._toggle_buttons(start=False, stop=True, start_record=True, stop_record=False)
+        # Réinitialiser le compteur après l'ouverture de la caméra
+        self.photos_captured_current_session = 0
+        self.is_recording_faces = False # S'assurer que l'enregistrement automatique est désactivé
 
     def _stop_camera(self):
         """Arrête la capture vidéo."""
@@ -139,14 +165,17 @@ class CameraView(QWidget):
             self.capture = None
             self.is_capturing = False
             self.video_label.clear()
-            self._toggle_buttons(start=True, stop=False, capture=False)
+            self._toggle_buttons(start=True, stop=False, start_record=False, stop_record=False)
+            # Réinitialiser le compteur et l'état d'enregistrement après l'arrêt de la caméra
+            self.photos_captured_current_session = 0
+            self.is_recording_faces = False
 
     def _update_frame(self):
         """Met à jour l'affichage vidéo en direct en détectant les visages."""
         if self.is_capturing and self.capture and self.capture.isOpened():
             ret, frame = self.capture.read()
             if ret:
-                self.current_frame = frame  # Ajout pour permettre la capture correcte
+                self.current_frame = frame
                 gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
                 faces = self.face_cascade.detectMultiScale(gray, scaleFactor=1.3, minNeighbors=5, minSize=(30, 30))
 
@@ -159,28 +188,65 @@ class CameraView(QWidget):
                 q_image = QImage(rgb_frame.data, w, h, bytes_per_line, QImage.Format_RGB888)
                 pixmap = QPixmap.fromImage(q_image).scaled(self.video_label.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation)
                 self.video_label.setPixmap(pixmap)
+
+                # --- Nouvelle fonctionnalité : Enregistrement automatique dans la boucle de mise à jour ---
+                if self.is_recording_faces and self.photos_captured_current_session < self.photo_count_to_capture:
+                    # Tenter de capturer une photo si un visage est détecté
+                    if len(faces) > 0:
+                        (x, y, w, h) = faces[0]
+                        face_roi_gray = gray[y:y + h, x:x + w]
+                        resized_face_gray = cv2.resize(face_roi_gray, self.target_size)
+                        
+                        filename = f"{self.identifier}_face_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}_{self.photos_captured_current_session + 1}.png" \
+                                    if self.identifier else f"face_capture_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}_{self.photos_captured_current_session + 1}.png"
+                        
+                        filepath = os.path.join(self.output_directory, filename)
+                        cv2.imwrite(filepath, resized_face_gray)
+                        
+                        self.photos_captured_current_session += 1
+                        QMessageBox.information(self, "Capture Automatique", f"Visage {self.photos_captured_current_session}/{self.photo_count_to_capture} enregistré sous : {filepath}")
+                        self.image_captured_signal.emit(filepath)
+                        
+                        if self.photos_captured_current_session >= self.photo_count_to_capture:
+                            self._stop_automatic_face_capture() # Arrêter l'enregistrement une fois toutes les photos capturées
+                            QMessageBox.information(self, "Enregistrement Terminé", f"Toutes les {self.photo_count_to_capture} photos ont été capturées automatiquement.")
+                            self.finished.emit("Automatic multiple captures completed.")
+                # --- Fin de la nouvelle fonctionnalité ---
+
             else:
                 self._stop_camera()
                 QMessageBox.warning(self, "Avertissement", "Flux vidéo terminé ou interrompu.")
 
-    def _capture_and_save_face(self):
-        """Capture un visage, le redimensionne et l'enregistre en noir et blanc."""
-        if self.is_capturing and self.current_frame is not None:
-            gray_frame = cv2.cvtColor(self.current_frame, cv2.COLOR_BGR2GRAY)
-            faces = self.face_cascade.detectMultiScale(gray_frame, scaleFactor=1.3, minNeighbors=5, minSize=(30, 30))
+    def _update_photo_count(self, value):
+        """Met à jour le nombre de photos à capturer en fonction de la valeur de QSpinBox."""
+        self.photo_count_to_capture = value
 
-            if len(faces) > 0:
-                (x, y, w, h) = faces[0]
-                face_roi_gray = gray_frame[y:y + h, x:x + w]  # Capture en niveaux de gris
-                resized_face_gray = cv2.resize(face_roi_gray, self.target_size)
-                filename = f"{self.identifier}_face_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.png" if self.identifier else f"face_capture_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
-                filepath = os.path.join(self.output_directory, filename)
-                cv2.imwrite(filepath, resized_face_gray)  # Enregistrement en noir et blanc
-                QMessageBox.information(self, "Succès", f"Visage enregistré sous : {filepath} (Taille: {self.target_size[0]}x{self.target_size[1]})")
-                self.image_captured_signal.emit(filepath)
-                self.finished.emit(filepath)  # Émission du signal 'finished'
-            else:
-                QMessageBox.warning(self, "Avertissement", "Aucun visage détecté.")
+    # --- Nouvelle fonctionnalité : Démarrer et arrêter l'enregistrement automatique ---
+    def _start_automatic_face_capture(self):
+        """Démarre l'enregistrement automatique des visages."""
+        if not self.is_capturing:
+            QMessageBox.warning(self, "Avertissement", "Veuillez d'abord ouvrir la caméra.")
+            return
+
+        self.photos_captured_current_session = 0 # Réinitialiser le compteur au début de l'enregistrement
+        self.is_recording_faces = True
+        self._toggle_buttons(start=False, stop=True, start_record=False, stop_record=True)
+        QMessageBox.information(self, "Enregistrement Automatique", f"L'enregistrement automatique de {self.photo_count_to_capture} visages a commencé.")
+
+    def _stop_automatic_face_capture(self):
+        """Arrête l'enregistrement automatique des visages."""
+        if self.is_recording_faces:
+            self.is_recording_faces = False
+            self._toggle_buttons(start=False, stop=True, start_record=True, stop_record=False)
+            QMessageBox.information(self, "Enregistrement Arrêté", "L'enregistrement automatique des visages a été arrêté.")
+            self.photos_captured_current_session = 0 # Réinitialiser le compteur
+    # --- Fin de la nouvelle fonctionnalité ---
+
+    def _capture_and_save_face(self):
+        # Cette fonction est l'ancienne logique de capture unique et n'est plus directement appelée.
+        # Elle est conservée ici pour référence mais la nouvelle logique utilise _start_automatic_face_capture
+        # et la boucle dans _update_frame.
+        pass # La logique est maintenant dans _update_frame
 
     def _change_output_directory(self):
         """Change le répertoire de sauvegarde des images."""
@@ -195,11 +261,13 @@ class CameraView(QWidget):
         self.fullscreen_button.setText("Quitter Plein Écran" if not self.is_fullscreen else "Plein Écran")
         self.is_fullscreen = not self.is_fullscreen
 
-    def _toggle_buttons(self, start=False, stop=False, capture=False):
-        """Active/désactive les boutons selon l'état de la capture."""
+    # Mise à jour de la fonction pour contrôler les nouveaux boutons
+    def _toggle_buttons(self, start=False, stop=False, start_record=False, stop_record=False):
+        """Active/désactive les boutons selon l'état de la capture et de l'enregistrement."""
         self.start_button.setEnabled(start)
         self.stop_button.setEnabled(stop)
-        self.capture_button.setEnabled(capture)
+        self.start_recording_button.setEnabled(start_record) # Contrôle du bouton Démarrer Enregistrement Auto
+        self.stop_recording_button.setEnabled(stop_record) # Contrôle du bouton Arrêter Enregistrement Auto
 
     def load_stylesheet(self, path: str) -> None:
         try:
@@ -215,4 +283,3 @@ class CameraView(QWidget):
                 "Erreur Critique",
                 f"Impossible de charger la feuille de style : {e}",
             )
-

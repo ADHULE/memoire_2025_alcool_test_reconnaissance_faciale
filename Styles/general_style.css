@@ -5,7 +5,9 @@ QMainWindow {
     font-family: 'Segoe UI', sans-serif;
     /* Dégradé évoquant une ambiance nocturne et intense */
     /* background: linear-gradient(135deg, #4B0082, #FF4500); */
-    background-color: rgba(139, 69, 19, 0.8);
+    /* background-color: rgba(139, 69, 19, 0.8);
+     */
+    background-color: #0F3460;
     color: #ecf0f1;
 }
 
@@ -14,9 +16,10 @@ QTabWidget::pane {
     /* Fond sombre avec une légère teinte chaotique */
     /* background-color: rgba(70, 20, 30, 0.8); */
     /* Bordure orange vif pour rappeler l'éclat des néons */
-    border: 2px solid #FF8C00;
+    border: 2px solid wheat;
 
-     background-color: #1A1A2E; /* Bleu nuit pour la technologie et la surveillance */
+    background-color: #1A1A2E;
+    /* Bleu nuit pour la technologie et la surveillance */
     /* border: 2px solid #0F3460; Bordure bleu foncé */
     border-radius: 10px;
     margin: 10px;
@@ -25,7 +28,7 @@ QTabWidget::pane {
 
 QListView,
 QDialog {
-    border: 1px solid #FF4500;
+    border: 1px solid #0F3460;
     background-color: #1c1c1c;
     color: #fff;
 }
@@ -34,7 +37,7 @@ QComboBox,
 QLineEdit {
     /* Fond gris sombre pour créer du contraste avec des bordures néon */
     background-color: #555555;
-    border: 1px solid #FF8C00;
+    border: 1px solid #0F3460;
     color: #ecf0f1;
     border-radius: 5px;
     font-size: 16px;
@@ -96,7 +99,8 @@ QPushButton,
 QToolButton {
     /* Boutons en orange vif pour un rendu énergique et une sensation d'urgence */
     /* background-color: #FF4500; */
-    background-color: #16213E; /* Bleu foncé pour un effet sérieux */
+    background-color: #16213E;
+    /* Bleu foncé pour un effet sérieux */
     border: 1px solid #0F3460;
     color: #ecf0f1;
     border: none;

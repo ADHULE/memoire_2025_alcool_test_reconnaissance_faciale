@@ -95,7 +95,7 @@ class ENREGISTREMENT_ADMIN(QWidget):
         try:
             administrateurs = self.admin_controller.get_all_administrateurs()
             if not administrateurs:
-                self._show_message("Information", "Aucun administrateur trouvé.")
+                # self._show_message("Information", ".")
                 return
 
             for admin in administrateurs:

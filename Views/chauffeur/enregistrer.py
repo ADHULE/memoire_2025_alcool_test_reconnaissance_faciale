@@ -67,8 +67,13 @@ class ENREGISTREMENT_CHAUFFEUR(QWidget):
         if self.chauffeur_controller.new_driver(**data):
             self._show_message("Succès", "Chauffeur enregistré avec succès.")
             self._load_chauffeurs()
+            self._clear_fields()
             
+    def _clear_fields(self):
+        for field in self.fields:
+            field.itemAt(1).widget().clear()
 
+       
     def _load_chauffeurs(self):
         """Charge et affiche la liste des chauffeurs avec les boutons Modifier et Supprimer."""
         self.list_view.clear()

@@ -12,6 +12,7 @@ if __name__ == "__main__":
         # Vérifier l'existence du fichier CSS avant de le charger
         css_path = "Styles/general_style.css"
         if os.path.exists(css_path):
+            
             try:
                 with open(css_path, "r") as file:
                     app.setStyleSheet(file.read())
@@ -34,7 +35,8 @@ if __name__ == "__main__":
         login.webcam_page_signal.connect(webcam.show)
         window.login_signal.connect(login.show)
         webcam.mainwindow_signal.connect(window.show)
-
+        
+        
         # Afficher la fenêtre de connexion
         login.show()
         sys.exit(app.exec())

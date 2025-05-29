@@ -42,10 +42,10 @@ class LOGINWINDOW(QMainWindow):
         sections_frame = QFrame()
         sections_layout = QHBoxLayout(sections_frame)
 
-        sections_layout.addWidget(self._create_section("Images/login_image.jpeg", "Login", self._create_login_form(), [("Connexion", self._check_login), ("Annuler", self._cancel_login)]))
-        sections_layout.addWidget(self._create_section("Images/arduino_image.jpeg", "Connexion Arduino", self._create_arduino_content(), [("Actualiser", self._detect_serial_ports), ("Connecter", self._connect_to_arduino)]))
+        sections_layout.addWidget(self._create_section("Images/login_image.jpeg", None, self._create_login_form(), [("Connexion", self._check_login), ("Annuler", self._cancel_login)]))
+        sections_layout.addWidget(self._create_section("Images/arduino_image.jpeg", None, self._create_arduino_content(), [("Actualiser", self._detect_serial_ports), ("Connecter", self._connect_to_arduino)]))
 
-        sections_layout.addWidget(self._create_section("Images/camera.jpg", "Caméra", None, [("Accéder à la caméra", self.webcam_page)]))
+        sections_layout.addWidget(self._create_section("Images/camera.jpg", None, None, [("Accéder à la caméra", self.webcam_page)]))
 
         general_layout.addWidget(sections_frame)
         self.main_layout.addWidget(general_frame)
@@ -118,7 +118,7 @@ class LOGINWINDOW(QMainWindow):
         section_frame.setObjectName("arduino_frame")
         layout = QVBoxLayout(section_frame)
 
-        layout.addWidget(QLabel("Connexion Arduino"))
+
         layout.addWidget(QLabel("Ports disponibles :"))
         self.port_combobox = QComboBox()
         layout.addWidget(self.port_combobox)
