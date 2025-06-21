@@ -1,5 +1,5 @@
 import serial  # Importation de la bibliothèque pour la communication série
-from Views.home.login_page import LOGINWINDOW
+from Views.Home.login_page import LOGINWINDOW
 
 class ALCOOL_VALUE:
     SEUIL_ALCOOL = 400  # Seuil défini dans le programme Arduino

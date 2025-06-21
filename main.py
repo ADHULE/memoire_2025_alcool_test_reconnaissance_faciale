@@ -1,9 +1,9 @@
 import sys
 import os
 from PySide6.QtWidgets import QApplication, QMessageBox
-from Views.home.main_window import MAINWINDOW
-from Views.home.login_page import LOGINWINDOW
-from Views.home.webcam_page import ACCER_WEBCAMERA
+from Views.Home.main_window import MAINWINDOW
+from Views.Home.login_page import LOGINWINDOW
+from Views.Home.webcam_page import ACCER_WEBCAMERA
 
 if __name__ == "__main__":
     try:
