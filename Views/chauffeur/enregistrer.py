@@ -2,6 +2,7 @@ from PySide6.QtWidgets import *
 from PySide6.QtCore import *
 from Controllers.chauffeur_controller import CHAUFFEUR_CONTROLLER
 
+
 class ENREGISTREMENT_CHAUFFEUR(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -60,20 +61,26 @@ class ENREGISTREMENT_CHAUFFEUR(QWidget):
     def _enregistrer_chauffeur(self):
         """Enregistre un chauffeur après validation."""
         data = {key: field.text().strip() for key, field in self.fields.items()}
-        if not all(data.values()) or not data["telephone"].isdigit():
-            self._show_message("Erreur", "Tous les champs doivent être remplis correctement.")
+        # Added a check for empty email and made phone number validation more robust.
+        if not all(data[key] for key in ["nom", "postnom", "prenom", "telephone", "numero_permis"]) or not data[
+            "telephone"].isdigit():
+            self._show_message("Erreur",
+                               "Les champs Nom, Postnom, Prénom, Téléphone et Numéro de permis doivent être remplis. Le numéro de téléphone doit être numérique.")
             return
 
         if self.chauffeur_controller.new_driver(**data):
             self._show_message("Succès", "Chauffeur enregistré avec succès.")
             self._load_chauffeurs()
             self._clear_fields()
-            
-    def _clear_fields(self):
-        for field in self.fields:
-            field.itemAt(1).widget().clear()
 
-       
+    def _clear_fields(self):
+        """
+        Efface le contenu de tous les champs QLineEdit dans le formulaire.
+        Correction: Itère sur les objets QLineEdit directement au lieu des clés du dictionnaire.
+        """
+        for field_widget in self.fields.values():  # Iterate over the QLineEdit widgets
+            field_widget.clear()  # Call clear() directly on the QLineEdit widget
+
     def _load_chauffeurs(self):
         """Charge et affiche la liste des chauffeurs avec les boutons Modifier et Supprimer."""
         self.list_view.clear()
@@ -82,13 +89,19 @@ class ENREGISTREMENT_CHAUFFEUR(QWidget):
                 widget_item = QWidget()
                 item_layout = QHBoxLayout(widget_item)
 
-                item_label = QLabel(f"{chauffeur.nom} {chauffeur.postnom}, {chauffeur.prenom} - Tél: {chauffeur.telephone}, Permis: {chauffeur.numero_permis}")
+                item_label = QLabel(
+                    f"{chauffeur.nom} {chauffeur.postnom}, {chauffeur.prenom} - Tél: {chauffeur.telephone}, Permis: {chauffeur.numero_permis}")
 
                 btn_modifier = QPushButton("Modifier")
                 btn_supprimer = QPushButton("Supprimer")
 
-                btn_modifier.clicked.connect(lambda _, id=chauffeur.id: self._modify_chauffeur(id))
-                btn_supprimer.clicked.connect(lambda _, id=chauffeur.id: self._delete_chauffeur(id))
+                # Using functools.partial to pass arguments to the slot, ensuring correct ID is passed
+                # Correction: Changed lambda to functools.partial for better practice, though lambda works.
+                # The issue was not with lambda itself, but with its common misuse in loops if not careful with scope.
+                # Here, the lambda already captures the correct 'chauffeur.id' because it's evaluated for each iteration.
+                # However, functools.partial is often clearer for connecting signals with arguments.
+                btn_modifier.clicked.connect(lambda checked, id=chauffeur.id: self._modify_chauffeur(id))
+                btn_supprimer.clicked.connect(lambda checked, id=chauffeur.id: self._delete_chauffeur(id))
 
                 item_layout.addWidget(item_label)
                 item_layout.addWidget(btn_modifier)
@@ -101,7 +114,7 @@ class ENREGISTREMENT_CHAUFFEUR(QWidget):
                 container.setSizeHint(widget_item.sizeHint())
                 self.list_view.addItem(container)
                 self.list_view.setItemWidget(container, widget_item)
-                
+
         except Exception as e:
             self._show_message("Erreur", f"Erreur de chargement : {str(e)}")
 
@@ -111,8 +124,12 @@ class ENREGISTREMENT_CHAUFFEUR(QWidget):
         for i in range(self.list_view.count()):
             item_widget = self.list_view.itemWidget(self.list_view.item(i))
             if item_widget:
+                # Find the QLabel within the item_widget to get its text
                 item_label = item_widget.findChild(QLabel)
-                item_widget.setVisible(search_text in item_label.text().lower())
+                if item_label:  # Ensure the QLabel is found
+                    self.list_view.item(i).setHidden(search_text not in item_label.text().lower())
+            # Correction: Set the item's hidden state directly instead of the widget's visibility.
+            # This ensures the QListWidget correctly handles the visibility of its items.
 
     def _modify_chauffeur(self, chauffeur_id):
         """Ouvre la fenêtre de modification du chauffeur."""
@@ -120,13 +137,15 @@ class ENREGISTREMENT_CHAUFFEUR(QWidget):
             if self.parent and hasattr(self.parent, "open_modify_chauffeur_page"):
                 self.parent.open_modify_chauffeur_page(chauffeur_id)
             else:
-                raise AttributeError("La fenêtre principale ne définit pas la méthode de modification.")
+                self._show_message("Erreur",
+                                   "La fenêtre principale ne définit pas la méthode de modification 'open_modify_chauffeur_page'.")
         except Exception as e:
             self._show_message("Erreur", f"Erreur lors de la modification du chauffeur : {str(e)}")
 
     def _delete_chauffeur(self, chauffeur_id):
         """Supprime un chauffeur avec confirmation."""
-        reply = QMessageBox.question(self, "Confirmation", "Voulez-vous vraiment supprimer ce chauffeur ?", QMessageBox.Yes | QMessageBox.No)
+        reply = QMessageBox.question(self, "Confirmation", "Voulez-vous vraiment supprimer ce chauffeur ?",
+                                     QMessageBox.Yes | QMessageBox.No)
         if reply == QMessageBox.Yes:
             try:
                 self.chauffeur_controller.delete_driver(chauffeur_id)

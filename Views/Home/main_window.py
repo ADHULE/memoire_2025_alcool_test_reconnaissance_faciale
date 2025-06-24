@@ -3,6 +3,7 @@ from PySide6.QtCore import *
 import functools
 
 # Importation des différentes pages
+# Assurez-vous que ces imports sont corrects et que les fichiers existent
 from Views.chauffeur.enregistrer import ENREGISTREMENT_CHAUFFEUR
 from Views.chauffeur.modifier import MODIFIER_CHAUFFEUR
 from Views.image.image_view import IMAGE_VIEW
@@ -21,19 +22,20 @@ class MAINWINDOW(QMainWindow):
         super().__init__()
 
         self.setWindowTitle("Application de Gestion Académique")
+        self.setMinimumSize(800, 600)  # Suggestion: Set a minimum size for better initial display
 
         # Créer le widget d'onglets
         self.tab_widget = QTabWidget()
         self.setCentralWidget(self.tab_widget)
 
         # Ajouter les différentes pages à l'onglet
+        # Il est important de passer 'self' comme parent si les pages ont besoin d'interagir avec la fenêtre principale
         self.pages = {
-            "Admin":ENREGISTREMENT_ADMIN(parent=self),
-            "Driver": ENREGISTREMENT_CHAUFFEUR(parent=self),
-            "Add Images": IMAGE_VIEW(parent=self),
-            "Display Images": DISPLAY_IMAGES(parent=self),
-            "Display History":DISPLAY_HISTORY(parent=self)
-                
+            "Gestion Admins": ENREGISTREMENT_ADMIN(parent=self),  # Renommé pour plus de clarté
+            "Gestion Chauffeurs": ENREGISTREMENT_CHAUFFEUR(parent=self),  # Renommé
+            "Ajouter Images": IMAGE_VIEW(parent=self),  # Renommé
+            "Afficher Images": DISPLAY_IMAGES(parent=self),  # Renommé
+            "Historique": DISPLAY_HISTORY(parent=self)  # Renommé
         }
 
         # Créer les onglets
@@ -43,14 +45,17 @@ class MAINWINDOW(QMainWindow):
         self.menu_button = QToolButton(self)
         self.menu_button.setPopupMode(QToolButton.InstantPopup)
         self.menu_button.setMenu(QMenu(self.menu_button))
+        # Initialement invisible, sera géré par resizeEvent et on_tab_changed
         self.menu_button.setVisible(False)
 
         # Ajout du bouton de déconnexion
         self.logout_button = QPushButton("Déconnexion")
         self.logout_button.clicked.connect(self.back_to_login_page)
+        # Assurez-vous que le bouton de déconnexion est toujours visible
         self.tab_widget.setCornerWidget(self.logout_button, Qt.TopRightCorner)
 
         # Connecter le signal de changement d'onglet
+        # Ceci permet de gérer la visibilité du menu_button si nécessaire
         self.tab_widget.currentChanged.connect(self.on_tab_changed)
 
     def create_tabs(self):
@@ -62,25 +67,35 @@ class MAINWINDOW(QMainWindow):
 
     def on_tab_changed(self, index):
         """
-        Gère l'affichage du bouton de menu en fonction de l'onglet actif.
+        Gère la logique spécifique lors du changement d'onglet si nécessaire.
+        Vous pourriez vouloir ajuster le menu_button ici si son comportement dépend de l'onglet.
+        Actuellement, il n'y a pas de logique spécifique ici qui rendrait le bouton de menu visible
+        uniquement pour l'index 2. Le `resizeEvent` gère la visibilité basée sur la largeur.
         """
-        self.menu_button.setVisible(index == 2)
+        # Si vous vouliez que le menu_button soit visible SEULEMENT pour un onglet spécifique (ex: index 2),
+        # vous pourriez le réactiver ici, mais le `resizeEvent` le gère déjà.
+        # self.menu_button.setVisible(self.is_narrow and index == 2)
+        pass  # Pas de changement fonctionnel nécessaire ici pour le moment.
 
     def resizeEvent(self, event):
         """
         Ajuste l'affichage des onglets et du bouton de menu en fonction de la taille de la fenêtre.
         """
+        # Mise à jour de l'état "is_narrow"
         is_narrow = event.size().width() < 600
         self.tab_widget.tabBar().setVisible(not is_narrow)
+
+        # Le bouton de menu est visible si la fenêtre est étroite
         self.menu_button.setVisible(is_narrow)
 
         if is_narrow:
+            # Reconstruire le menu à chaque redimensionnement en mode étroit
+            # pour s'assurer qu'il reflète les onglets actuels.
             self.menu_button.menu().clear()
             for i in range(self.tab_widget.count()):
                 action = self.menu_button.menu().addAction(self.tab_widget.tabText(i))
-                action.triggered.connect(
-                    functools.partial(self.tab_widget.setCurrentIndex, i)
-                )
+                # Utilisation de functools.partial pour s'assurer que le bon index est passé
+                action.triggered.connect(functools.partial(self.tab_widget.setCurrentIndex, i))
 
         super().resizeEvent(event)
 
@@ -89,37 +104,43 @@ class MAINWINDOW(QMainWindow):
         Émet le signal pour retourner à la page de connexion et ferme la fenêtre principale.
         """
         confirmation = QMessageBox.question(
-            self, "Confirmation", " Voulez vous vraiment vous deconnecter?",
+            self, "Confirmation", "Voulez-vous vraiment vous déconnecter ?",
             QMessageBox.Yes | QMessageBox.No
         )
 
         if confirmation == QMessageBox.Yes:
             try:
+                self.login_signal.emit()  # Émet le signal pour que la logique externe prenne le relais
+                self.close()  # Ferme cette fenêtre principale
+            except Exception as e:
+                # Correction: Le premier argument de QMessageBox.information doit être le parent
+                QMessageBox.critical(self, "Erreur de Déconnexion",
+                                     f"Une erreur est survenue lors de la déconnexion : {str(e)}")
 
-                self.login_signal.emit()
-                self.close()
-            except  Exception as e:
-                QMessageBox.information(f"Erreur lors de la deconnection {str(e)}")
     def navigate_to(self, page_name):
         """
-        Permet de naviguer vers une page spécifique.
+        Permet de naviguer vers une page spécifique en utilisant son nom défini dans self.pages.
         """
         if page_name in self.pages:
             self.tab_widget.setCurrentWidget(self.pages[page_name])
         else:
-            print(f"Page '{page_name}' non trouvée.")
+            QMessageBox.warning(self, "Page Non Trouvée", f"La page '{page_name}' n'existe pas.")
 
-
-    """__________________________NAVIGATION ENTRE VERS LES PAGES________________________"""
+    # --- NAVIGATION VERS LES PAGES DE MODIFICATION (Pop-up Dialogues) ---
+    # Ces méthodes ouvrent des fenêtres de modification comme des dialogues modaux.
 
     def open_modify_photo_page(self, id_photo):
-            modifier_photo = MODIFIER_IMAGES_PAGE(id_photo)
-            modifier_photo.exec()
+        """Ouvre la fenêtre de modification d'image."""
+        # Passer 'self' comme parent à la fenêtre de modification est une bonne pratique
+        modifier_photo = MODIFIER_IMAGES_PAGE(id_photo, parent=self)
+        modifier_photo.exec()  # Ouvre comme un dialogue modal
 
     def open_modify_admin_page(self, admin_id):
-            modifier_photo = MODIFIER_ADMIN(admin_id)
-            modifier_photo.exec()
+        """Ouvre la fenêtre de modification d'administrateur."""
+        modifier_admin = MODIFIER_ADMIN(admin_id, parent=self)
+        modifier_admin.exec()
 
     def open_modify_chauffeur_page(self, chauffeur_id):
-            modifier_photo = MODIFIER_CHAUFFEUR(chauffeur_id)
-            modifier_photo.exec()
+        """Ouvre la fenêtre de modification de chauffeur."""
+        modifier_chauffeur = MODIFIER_CHAUFFEUR(chauffeur_id, parent=self)
+        modifier_chauffeur.exec()
