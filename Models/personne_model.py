@@ -11,6 +11,7 @@ class PERSONNE(Base):
     prenom = Column(String(255), nullable=True)
     telephone = Column(String(20), nullable=False)
     email = Column(String(255), unique=True, nullable=True)
+    sex=Column(String(10),unique=True,nullable=True)
 
     # Relation avec Image
     images = relationship("IMAGE", back_populates="personne", cascade="all, delete-orphan")

@@ -3,7 +3,7 @@ from Models.database_model import my_session
 
 
 class CHAUFFEUR_CONTROLLER:
-    def new_driver(self, nom, postnom, prenom, telephone, email, numero_permis):
+    def new_driver(self, nom, postnom, prenom, telephone, email, numero_permis,sex):
         """🔹 Créer un chauffeur."""
         try:
             new_chauffeur = CHAUFFEUR(
@@ -13,6 +13,7 @@ class CHAUFFEUR_CONTROLLER:
                 telephone=telephone,
                 email=email,
                 numero_permis=numero_permis,
+                sex=sex,
             )
 
             my_session.add(new_chauffeur)
@@ -50,6 +51,7 @@ class CHAUFFEUR_CONTROLLER:
         telephone=None,
         email=None,
         numero_permis=None,
+        sex=None
     ):
         """🔹 Mettre à jour un chauffeur."""
         try:
@@ -72,7 +74,8 @@ class CHAUFFEUR_CONTROLLER:
                 chauffeur.email = email
             if numero_permis:
                 chauffeur.numero_permis = numero_permis
-
+            if sex:
+                chauffeur.sex=sex
             my_session.commit()
             my_session.refresh(chauffeur)
             return chauffeur

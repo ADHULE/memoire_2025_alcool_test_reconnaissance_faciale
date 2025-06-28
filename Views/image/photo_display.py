@@ -2,10 +2,7 @@ import os
 import logging
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QPixmap
-from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLabel,
-    QLineEdit, QScrollArea, QGridLayout, QSizePolicy, QMessageBox
-)
+from PySide6.QtWidgets import *
 
 from Controllers.chauffeur_controller import CHAUFFEUR_CONTROLLER
 from Controllers.image_controller import IMAGE_CONTROLLER
@@ -13,7 +10,7 @@ from Controllers.image_controller import IMAGE_CONTROLLER
 class DISPLAY_IMAGES(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("Gestion des Photos")
+        self.setWindowTitle("AFFICHER LES PHOTOS")
         self.parent = parent
 
         self.photo_controller = IMAGE_CONTROLLER()

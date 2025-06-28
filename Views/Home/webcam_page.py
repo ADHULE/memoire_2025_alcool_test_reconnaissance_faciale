@@ -1,18 +1,23 @@
-import os
+# Suppression de `import os` (inutile)
 import cv2
 import numpy as np
 import datetime
-from PySide6.QtWidgets import *
-from PySide6.QtGui import QImage, QPixmap
-from PySide6.QtCore import Qt, QTimer, Signal
 from insightface.app import FaceAnalysis
+
+from PySide6.QtWidgets import *
+from PySide6.QtGui import *
+from PySide6.QtCore import *
+
+from Controllers.chauffeur_controller import CHAUFFEUR_CONTROLLER
+from Controllers.image_controller import IMAGE_CONTROLLER
+
 
 class ACCER_WEBCAMERA(QMainWindow):
     mainwindow_signal = Signal()
 
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Reconnaissance Faciale avec InsightFace")
+        self.setWindowTitle("GESTION DE LA RECONNAISSANCE FACIALE")
 
         self.face_engine = FaceAnalysis(name='buffalo_l', providers=['CPUExecutionProvider'])
         self.face_engine.prepare(ctx_id=0)
@@ -20,12 +25,18 @@ class ACCER_WEBCAMERA(QMainWindow):
         self.face_db = []
         self.recognition_threshold = 0.65
         self.cap = None
-        self.timer = QTimer()
+        self.timer = QTimer(self)
         self.timer.timeout.connect(self._update_frame)
+
+        self.saved_urls = []
+        self.active_url = None
         self.fullscreen = False
 
+        self.person_controller = CHAUFFEUR_CONTROLLER()
+        self.image_controller = IMAGE_CONTROLLER()
+
         self._setup_ui()
-        self._load_face_database("photos_db")
+        self._load_face_database()
 
     def _setup_ui(self):
         central_widget = QWidget()
@@ -36,49 +47,33 @@ class ACCER_WEBCAMERA(QMainWindow):
         self.label_video.setScaledContents(True)
         layout.addWidget(self.label_video)
 
-        config_layout = QHBoxLayout()
-
+        controls = QHBoxLayout()
         self.url_input = QLineEdit()
         self.url_input.setPlaceholderText("URL de la caméra IP (ex: rtsp://...)")
-        config_layout.addWidget(self.url_input)
+        controls.addWidget(self.url_input)
 
         self.connect_url_button = QPushButton("Activer URL")
-        self.connect_url_button.clicked.connect(self._start_url_camera)
-        config_layout.addWidget(self.connect_url_button)
+        self.connect_url_button.clicked.connect(self._handle_url_connection)
+        controls.addWidget(self.connect_url_button)
 
         self.cam_selector = QComboBox()
         self.cam_selector.addItems(self._detect_local_cameras())
-        config_layout.addWidget(self.cam_selector)
+        controls.addWidget(self.cam_selector)
 
         self.connect_local_button = QPushButton("Activer Webcam")
         self.connect_local_button.clicked.connect(self._start_local_camera)
-        config_layout.addWidget(self.connect_local_button)
+        controls.addWidget(self.connect_local_button)
 
         self.stop_button = QPushButton("Arrêter")
         self.stop_button.clicked.connect(self._stop_camera)
-        config_layout.addWidget(self.stop_button)
+        controls.addWidget(self.stop_button)
 
         self.fullscreen_button = QPushButton("Plein écran")
         self.fullscreen_button.clicked.connect(self._toggle_fullscreen)
-        config_layout.addWidget(self.fullscreen_button)
+        controls.addWidget(self.fullscreen_button)
 
-        layout.addLayout(config_layout)
+        layout.addLayout(controls)
         self.setCentralWidget(central_widget)
-
-    def _load_face_database(self, folder_path):
-        if not os.path.exists(folder_path):
-            return
-        for filename in os.listdir(folder_path):
-            if filename.lower().endswith((".jpg", ".jpeg", ".png")):
-                path = os.path.join(folder_path, filename)
-                img = cv2.imread(path)
-                faces = self.face_engine.get(img)
-                if faces:
-                    name = os.path.splitext(filename)[0]
-                    self.face_db.append({
-                        "nom": name,
-                        "embedding": faces[0].embedding
-                    })
 
     def _detect_local_cameras(self):
         available = []
@@ -89,40 +84,78 @@ class ACCER_WEBCAMERA(QMainWindow):
                 cap.release()
         return available or ["Aucune caméra détectée"]
 
-    def _start_local_camera(self):
-        index = int(self.cam_selector.currentText().split()[-1])
-        self._open_camera(index)
-
-    def _start_url_camera(self):
+    def _handle_url_connection(self):
         url = self.url_input.text().strip()
         if not url:
             QMessageBox.warning(self, "Erreur", "Veuillez entrer une URL valide.")
             return
+        self.saved_urls.append(url)
         self._open_camera(url)
+        self.url_input.setText("Connecté")
+
+    def _start_local_camera(self):
+        try:
+            index = int(self.cam_selector.currentText().split()[-1])
+            self._open_camera(index)
+        except Exception:
+            QMessageBox.warning(self, "Erreur", "Sélection de caméra invalide.")
 
     def _open_camera(self, source):
         self._stop_camera()
         self.cap = cv2.VideoCapture(source)
         if self.cap.isOpened():
             self.timer.start(30)
+            if isinstance(source, str):
+                self.active_url = source
         else:
             QMessageBox.critical(self, "Erreur", "Impossible d’accéder à la caméra.")
 
     def _stop_camera(self):
         self.timer.stop()
-        if self.cap and self.cap.isOpened():
+        if self.cap:
             self.cap.release()
+        self.cap = None
         self.label_video.clear()
+        self.url_input.setText("")
 
     def _toggle_fullscreen(self):
+        self.fullscreen = not self.fullscreen
         if self.fullscreen:
-            self.showNormal()
-            self.fullscreen = False
-            self.fullscreen_button.setText("Plein écran")
-        else:
             self.showFullScreen()
-            self.fullscreen = True
             self.fullscreen_button.setText("Quitter plein écran")
+        else:
+            self.showNormal()
+            self.fullscreen_button.setText("Plein écran")
+
+    def _load_face_database(self):
+        self.face_db.clear()
+        try:
+            self.all_photos = self.image_controller.get_all_photos()
+            person = self.person_controller.get_driver_by_id(self.all_photos.personne_id)
+        except Exception as e:
+            print("Erreur de chargement des chauffeurs :", e)
+            return
+
+        for chauf in person:
+            try:
+                # photo_data = self.image_controller.get_photo(chauf.id)
+                # if not photo_data:
+                #     continue
+                img = cv2.imread("systeme_adhule.jpeg")
+
+                if img is None:
+                    continue
+                faces = self.face_engine.get(img)
+                if not faces:
+                    continue
+                self.face_db.append({
+                    "nom": f"{chauf.nom} {chauf.prenom} | Tel: {chauf.telephone} | Email: {chauf.email} | Permis: {chauf.numero_permis} | Sexe: {chauf.sex}",
+                    "embedding": faces[0].embedding,
+                    "fonction": getattr(chauf, "fonction", None),
+                    "id": getattr(chauf, "id", None)
+                })
+            except Exception as e:
+                print(f"Erreur de traitement photo ({chauf.nom}): {e}")
 
     def _log_recognition(self, name, score):
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -132,11 +165,9 @@ class ACCER_WEBCAMERA(QMainWindow):
     def _update_frame(self):
         if not self.cap or not self.cap.isOpened():
             return
-
         ret, frame = self.cap.read()
         if not ret:
             return
-
         rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         faces = self.face_engine.get(rgb_frame)
 
@@ -155,8 +186,7 @@ class ACCER_WEBCAMERA(QMainWindow):
                     name = profile["nom"]
                     best_score = sim
 
-            label = f"{name} ({int(face.age)} ans)" if hasattr(face, "age") else name
-            cv2.putText(frame, label, (bbox[0], bbox[1]-10),
+            cv2.putText(frame, name, (bbox[0], bbox[1] - 10),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 0, 0), 2)
 
             if name != "Inconnu":

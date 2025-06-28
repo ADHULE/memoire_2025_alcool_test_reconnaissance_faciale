@@ -24,7 +24,18 @@ class ENREGISTREMENT_CHAUFFEUR(QWidget):
             "telephone": QLineEdit(),
             "email": QLineEdit(),
             "numero_permis": QLineEdit(),
+            "sex":QLineEdit(),
         }
+
+        # ajouter des informations facultatives dans le champs de saisi
+
+        self.fields["nom"].setPlaceholderText("Entrez votre nom")
+        self.fields["postnom"].setPlaceholderText("Entrez votre post-nom")
+        self.fields["prenom"].setPlaceholderText("Entrez votre prénom")
+        self.fields["telephone"].setPlaceholderText("Entrez votre numero de telephone")
+        self.fields["email"].setPlaceholderText("exemple@email.com")
+        self.fields["numero_permis"].setPlaceholderText("Numéro de permis")
+        self.fields["sex"].setPlaceholderText("Homme ou Femme")
 
         for i, (label, field) in enumerate(self.fields.items()):
             self.form_layout.addWidget(QLabel(f"{label.capitalize()}:"), i, 0)
@@ -90,7 +101,7 @@ class ENREGISTREMENT_CHAUFFEUR(QWidget):
                 item_layout = QHBoxLayout(widget_item)
 
                 item_label = QLabel(
-                    f"{chauffeur.nom} {chauffeur.postnom}, {chauffeur.prenom} - Tél: {chauffeur.telephone}, Permis: {chauffeur.numero_permis}")
+                    f"{chauffeur.nom} {chauffeur.postnom}, {chauffeur.prenom} - Tél: {chauffeur.telephone}, Permis: {chauffeur.numero_permis},Sex: {chauffeur.sex}")
 
                 btn_modifier = QPushButton("Modifier")
                 btn_supprimer = QPushButton("Supprimer")

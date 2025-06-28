@@ -1,6 +1,8 @@
 from PySide6.QtWidgets import *
 from PySide6.QtCore import *
+from  PySide6.QtGui import *
 import functools
+import os
 
 # Importation des différentes pages
 # Assurez-vous que ces imports sont corrects et que les fichiers existent
@@ -21,7 +23,9 @@ class MAINWINDOW(QMainWindow):
     def __init__(self):
         super().__init__()
 
-        self.setWindowTitle("Application de Gestion Académique")
+        self.setWindowTitle("GESTION DE DECTEUR D'ALCOOL ET RECONNAISSANCE FACIALE")
+        # icon_path = os.path.abspath("Images/Logo.ico")
+        # self.setWindowIcon(QIcon(icon_path))
         self.setMinimumSize(800, 600)  # Suggestion: Set a minimum size for better initial display
 
         # Créer le widget d'onglets
@@ -32,10 +36,10 @@ class MAINWINDOW(QMainWindow):
         # Il est important de passer 'self' comme parent si les pages ont besoin d'interagir avec la fenêtre principale
         self.pages = {
             "Gestion Admins": ENREGISTREMENT_ADMIN(parent=self),  # Renommé pour plus de clarté
-            "Gestion Chauffeurs": ENREGISTREMENT_CHAUFFEUR(parent=self),  # Renommé
-            "Ajouter Images": IMAGE_VIEW(parent=self),  # Renommé
-            "Afficher Images": DISPLAY_IMAGES(parent=self),  # Renommé
-            "Historique": DISPLAY_HISTORY(parent=self)  # Renommé
+            "Gestion Chauffeurs": ENREGISTREMENT_CHAUFFEUR(parent=self),
+            "Ajouter Images": IMAGE_VIEW(parent=self),
+            "Afficher Images": DISPLAY_IMAGES(parent=self),
+            "Historique": DISPLAY_HISTORY(parent=self)
         }
 
         # Créer les onglets

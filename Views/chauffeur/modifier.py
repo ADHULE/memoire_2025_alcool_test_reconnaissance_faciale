@@ -19,6 +19,7 @@ class MODIFIER_CHAUFFEUR(QDialog):
             "telephone": QLineEdit(),
             "email": QLineEdit(),
             "numero_permis": QLineEdit(),
+            "sex":QLineEdit(),
         }
         # Suppression du checkbox is_active
 
