@@ -1,9 +1,8 @@
-# Suppression de `import os` (inutile)
 import cv2
 import numpy as np
 import datetime
 from insightface.app import FaceAnalysis
-
+import  os
 from PySide6.QtWidgets import *
 from PySide6.QtGui import *
 from PySide6.QtCore import *
@@ -19,21 +18,25 @@ class ACCER_WEBCAMERA(QMainWindow):
         super().__init__()
         self.setWindowTitle("GESTION DE LA RECONNAISSANCE FACIALE")
 
+        # Initialise le moteur InsightFace
         self.face_engine = FaceAnalysis(name='buffalo_l', providers=['CPUExecutionProvider'])
         self.face_engine.prepare(ctx_id=0)
 
+        # Données nécessaires à la reconnaissance
         self.face_db = []
         self.recognition_threshold = 0.65
         self.cap = None
         self.timer = QTimer(self)
         self.timer.timeout.connect(self._update_frame)
 
+        # Contrôleurs
+        self.person_controller = CHAUFFEUR_CONTROLLER()
+        self.image_controller = IMAGE_CONTROLLER()
+
+        # États d’interface
         self.saved_urls = []
         self.active_url = None
         self.fullscreen = False
-
-        self.person_controller = CHAUFFEUR_CONTROLLER()
-        self.image_controller = IMAGE_CONTROLLER()
 
         self._setup_ui()
         self._load_face_database()
@@ -48,10 +51,13 @@ class ACCER_WEBCAMERA(QMainWindow):
         layout.addWidget(self.label_video)
 
         controls = QHBoxLayout()
+        # controls.addStretch()
+
         self.url_input = QLineEdit()
         self.url_input.setPlaceholderText("URL de la caméra IP (ex: rtsp://...)")
         controls.addWidget(self.url_input)
 
+        controls.addStretch()
         self.connect_url_button = QPushButton("Activer URL")
         self.connect_url_button.clicked.connect(self._handle_url_connection)
         controls.addWidget(self.connect_url_button)
@@ -59,21 +65,27 @@ class ACCER_WEBCAMERA(QMainWindow):
         self.cam_selector = QComboBox()
         self.cam_selector.addItems(self._detect_local_cameras())
         controls.addWidget(self.cam_selector)
+        controls.addStretch()
 
         self.connect_local_button = QPushButton("Activer Webcam")
         self.connect_local_button.clicked.connect(self._start_local_camera)
         controls.addWidget(self.connect_local_button)
+        controls.addStretch()
 
         self.stop_button = QPushButton("Arrêter")
         self.stop_button.clicked.connect(self._stop_camera)
         controls.addWidget(self.stop_button)
+        controls.addStretch()
 
         self.fullscreen_button = QPushButton("Plein écran")
         self.fullscreen_button.clicked.connect(self._toggle_fullscreen)
         controls.addWidget(self.fullscreen_button)
+        controls.addStretch()
 
         layout.addLayout(controls)
         self.setCentralWidget(central_widget)
+
+
 
     def _detect_local_cameras(self):
         available = []
@@ -127,35 +139,62 @@ class ACCER_WEBCAMERA(QMainWindow):
             self.showNormal()
             self.fullscreen_button.setText("Plein écran")
 
+
+    """Charge les visages des chauffeurs depuis la base de données pour la reconnaissance."""
     def _load_face_database(self):
-        self.face_db.clear()
+        self.face_db.clear()  # Vide la base de données de visages existante
         try:
-            self.all_photos = self.image_controller.get_all_photos()
-            person = self.person_controller.get_driver_by_id(self.all_photos.personne_id)
-        except Exception as e:
-            print("Erreur de chargement des chauffeurs :", e)
-            return
+            # Récupère toutes les photos enregistrées
+            images = self.image_controller.get_all_photos()
 
-        for chauf in person:
-            try:
-                # photo_data = self.image_controller.get_photo(chauf.id)
-                # if not photo_data:
-                #     continue
-                img = cv2.imread("systeme_adhule.jpeg")
+            # S'assurer que images est une liste/itérable, même s'il n'y a qu'un seul élément
+            if not isinstance(images, (list, tuple)):
+                if images is None:
+                    images = []
+                else:
+                    images = [images]
 
-                if img is None:
+            for image_obj in images:  # 'image_obj' est un objet image (ex: MockImage)
+                img_path = image_obj.url  # Accède à l'URL de l'image directement depuis l'objet image
+
+                # Vérifiez si le fichier image existe avant de le lire
+                if not os.path.exists(img_path):
+                    QMessageBox.critical(f"Attention: Le fichier image n'existe pas : {img_path}. Ignoré.")
                     continue
+
+                img = cv2.imread(img_path)
+                if img is None:
+                    print(f"Attention: Impossible de charger l'image depuis {img_path}. Fichier corrompu ou illisible.")
+                    continue
+
+                # Récupère les détails du chauffeur associé à cette image
+                person = self.person_controller.get_driver_by_id(image_obj.personne_id)
+                if person is None:
+                    print(
+                        f"Attention: Chauffeur avec ID {image_obj.personne_id} non trouvé pour l'image {img_path}. Ignoré.")
+                    continue
+
+                # Détecte les visages dans l'image
                 faces = self.face_engine.get(img)
                 if not faces:
+                    print(f"Attention: Aucun visage détecté dans l'image {img_path}. Ignoré.")
                     continue
+
+                # Si plusieurs visages sont détectés, nous prenons le premier comme référence du profil
+                # Ajustez cette logique si vous avez besoin de gérer plusieurs visages par photo de profil
                 self.face_db.append({
-                    "nom": f"{chauf.nom} {chauf.prenom} | Tel: {chauf.telephone} | Email: {chauf.email} | Permis: {chauf.numero_permis} | Sexe: {chauf.sex}",
-                    "embedding": faces[0].embedding,
-                    "fonction": getattr(chauf, "fonction", None),
-                    "id": getattr(chauf, "id", None)
+                    "nom": f"{person.nom} {person.prenom} | Tel: {person.telephone} | Email: {person.email} | Permis: {person.numero_permis} | Sexe: {person.sex}",
+                    "embedding": faces[0].embedding,  # Utilise l'embedding du premier visage détecté
+                    "fonction": getattr(person, "fonction", None),
+                    # Utilise getattr pour une gestion sécurisée des attributs
+                    "id": getattr(person, "id", None)
                 })
-            except Exception as e:
-                print(f"Erreur de traitement photo ({chauf.nom}): {e}")
+            print(f"Base de données de visages chargée avec {len(self.face_db)} profils.")
+
+        except Exception as e:
+            print(f"Erreur de chargement des visages : {e}")
+            QMessageBox.critical(self, "Erreur de chargement",
+                                 f"Impossible de charger la base de données de visages: {e}")
 
     def _log_recognition(self, name, score):
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -180,7 +219,7 @@ class ACCER_WEBCAMERA(QMainWindow):
 
             for profile in self.face_db:
                 sim = np.dot(face.embedding, profile["embedding"]) / (
-                    np.linalg.norm(face.embedding) * np.linalg.norm(profile["embedding"])
+                        np.linalg.norm(face.embedding) * np.linalg.norm(profile["embedding"])
                 )
                 if sim > self.recognition_threshold and sim > best_score:
                     name = profile["nom"]
