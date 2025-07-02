@@ -14,7 +14,7 @@ from Views.image.modifier_photo import MODIFIER_IMAGES_PAGE
 from Views.admin.enregistrer import ENREGISTREMENT_ADMIN
 from Views.admin.modifier import MODIFIER_ADMIN
 from Views.historique.display_history import DISPLAY_HISTORY
-from  Views.mq3_alcool.valeur_mq3_arduino import ArduinoValueView
+from  Views.mq3_alcool.valeur_mq3_arduino import MQ3MinimalGUI
 
 
 class MAINWINDOW(QMainWindow):
@@ -41,7 +41,7 @@ class MAINWINDOW(QMainWindow):
             "Ajouter Images": IMAGE_VIEW(parent=self),
             "Afficher Images": DISPLAY_IMAGES(parent=self),
             "Historique": DISPLAY_HISTORY(parent=self),
-            "Arduino Value":ArduinoValueView()
+            "Arduino Value":MQ3MinimalGUI()
         }
 
         # Créer les onglets

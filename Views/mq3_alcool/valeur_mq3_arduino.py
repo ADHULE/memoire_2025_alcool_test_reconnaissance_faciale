@@ -1,65 +1,113 @@
-from PySide6.QtCore import QTimer
+import sys
+import serial
+import serial.tools.list_ports
+import json
+
+from PySide6.QtCore import QTimer, Qt
 from PySide6.QtWidgets import (
-    QWidget, QTextEdit, QPushButton, QVBoxLayout,
-    QLabel, QMessageBox, QComboBox, QHBoxLayout
+    QApplication, QWidget, QVBoxLayout, QHBoxLayout, QPushButton,
+    QTextEdit, QLabel, QComboBox, QMessageBox
 )
-from Controllers.arduino_controller import ArduinoController
 
+class MQ3MinimalGUI(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("MQ3 Alcohol Sensor Monitor")
+        self.serial_connection = None
 
-class ArduinoValueView(QWidget):
-    def __init__(self, parent=None):
-        super().__init__(parent)
-
-        # Widgets UI
+        # Widgets
+        self.port_combobox = QComboBox()
+        self.refresh_button = QPushButton("🔄 Actualiser ports")
+        self.connect_button = QPushButton("Connexion")
+        self.disconnect_button = QPushButton("Déconnexion")
+        self.status_label = QLabel("Statut : Déconnecté")
         self.output_display = QTextEdit()
         self.output_display.setReadOnly(True)
-        self.port_combobox = QComboBox()
-        self.status_label = QLabel("Statut : Déconnecté")
+        self.led_on_btn = QPushButton("Allumer LED")
+        self.led_off_btn = QPushButton("Éteindre LED")
 
-        self.start_button = QPushButton("Démarrer")
-        self.start_button.clicked.connect(self.start_reading)
+        # Disposition
+        top_layout = QHBoxLayout()
+        top_layout.addWidget(QLabel("Port série :"))
+        top_layout.addWidget(self.port_combobox)
+        top_layout.addWidget(self.refresh_button)
 
-        self.stop_button = QPushButton("Arrêter")
-        self.stop_button.clicked.connect(self.stop_reading)
-        self.stop_button.setEnabled(False)
+        ctrl_layout = QHBoxLayout()
+        ctrl_layout.addWidget(self.connect_button)
+        ctrl_layout.addWidget(self.disconnect_button)
+        ctrl_layout.addWidget(self.led_on_btn)
+        ctrl_layout.addWidget(self.led_off_btn)
 
-        # Instancie le contrôleur Arduino
-        self.arduino = ArduinoController(self.port_combobox, self.status_label)
-        self.arduino.data_received.connect(self.display_data)
-
-        # Timer désactivé pour laisser la lecture au thread série
-        self.timer = QTimer(self)
-        self.timer.setInterval(1000)
-        self.timer.timeout.connect(self.arduino.detect_serial_ports)
-        self.timer.start()
-
-        # Mise en page
         layout = QVBoxLayout()
-        layout.addWidget(QLabel("Ports détectés :"))
-        layout.addWidget(self.port_combobox)
+        layout.addLayout(top_layout)
         layout.addWidget(self.status_label)
-        layout.addWidget(QLabel("Données Arduino en temps réel :"))
+        layout.addLayout(ctrl_layout)
+        layout.addWidget(QLabel("Mesures en temps réel :"))
         layout.addWidget(self.output_display)
-
-        button_layout = QHBoxLayout()
-        button_layout.addWidget(self.start_button)
-        button_layout.addWidget(self.stop_button)
-        layout.addLayout(button_layout)
-
         self.setLayout(layout)
 
-    def start_reading(self):
-        self.arduino.connect_to_arduino()
-        if self.arduino.is_connected():
-            self.start_button.setEnabled(False)
-            self.stop_button.setEnabled(True)
-        else:
-            QMessageBox.warning(self, "Erreur", "Aucun port série valide sélectionné.")
+        # Connexions
+        self.refresh_button.clicked.connect(self.refresh_ports)
+        self.connect_button.clicked.connect(self.connect_serial)
+        self.disconnect_button.clicked.connect(self.disconnect_serial)
+        self.led_on_btn.clicked.connect(lambda: self.send_command("LED_ON\n"))
+        self.led_off_btn.clicked.connect(lambda: self.send_command("LED_OFF\n"))
 
-    def stop_reading(self):
-        self.arduino.close_connection()
-        self.start_button.setEnabled(True)
-        self.stop_button.setEnabled(False)
+        # Timer pour lire les données
+        self.read_timer = QTimer(self)
+        self.read_timer.timeout.connect(self.read_data)
 
-    def display_data(self, line):
-        self.output_display.append(line)
+        self.refresh_ports()
+
+    def refresh_ports(self):
+        self.port_combobox.clear()
+        ports = serial.tools.list_ports.comports()
+        for port in ports:
+            self.port_combobox.addItem(port.device)
+
+    def connect_serial(self):
+        port = self.port_combobox.currentText()
+        if not port:
+            QMessageBox.warning(self, "Erreur", "Aucun port sélectionné.")
+            return
+        try:
+            self.serial_connection = serial.Serial(port, baudrate=9600, timeout=1)
+            self.status_label.setText(f"🟢 Connecté à {port}")
+            self.status_label.setStyleSheet("color: green;")
+            self.read_timer.start(300)
+        except serial.SerialException as e:
+            QMessageBox.critical(self, "Erreur de connexion", str(e))
+
+    def disconnect_serial(self):
+        self.read_timer.stop()
+        if self.serial_connection and self.serial_connection.is_open:
+            self.serial_connection.close()
+        self.status_label.setText("🔴 Déconnecté")
+        self.status_label.setStyleSheet("color: red;")
+
+    def read_data(self):
+        try:
+            if self.serial_connection.in_waiting:
+                raw = self.serial_connection.readline().decode().strip()
+                try:
+                    data = json.loads(raw)
+                    msg = f"Alcool : {data['alcohol']}, État numérique : {data['digital']}, Alerte : {data['alert']}"
+                    self.output_display.append(msg)
+                except json.JSONDecodeError:
+                    self.output_display.append(f"[Texte brut] {raw}")
+        except Exception as e:
+            self.output_display.append(f"[Erreur] {e}")
+
+    def send_command(self, cmd):
+        if self.serial_connection and self.serial_connection.is_open:
+            try:
+                self.serial_connection.write(cmd.encode())
+            except Exception as e:
+                self.output_display.append(f"[Erreur d'envoi] {e}")
+
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+    gui = MQ3MinimalGUI()
+    gui.resize(500, 400)
+    gui.show()
+    sys.exit(app.exec())
