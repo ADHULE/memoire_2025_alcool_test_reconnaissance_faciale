@@ -12,8 +12,7 @@ class CameraController:
         self.timer = QTimer()
         self.timer.timeout.connect(self.update_frame)
 
-        self.face_cascade = cv2.CascadeClassifier(
-            "Views/image/haarcascade_frontalface_default.xml")
+
         self.recognizer = cv2.face.LBPHFaceRecognizer_create()
         self.training_file = None
         self.is_recognizing = False

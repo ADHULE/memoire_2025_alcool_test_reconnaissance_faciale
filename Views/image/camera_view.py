@@ -22,7 +22,7 @@ class CameraView(QWidget):
         self.is_capturing, self.is_fullscreen = False, False
         self.output_directory = "captured_faces"
         self.target_size = (300, 400)
-        self.face_cascade = cv2.CascadeClassifier("Views/image/haarcascade_frontalface_default.xml")
+
 
         # Compteur de photos pour l'enregistrement automatique
         self.photo_count_to_capture = 1
