@@ -1,17 +1,12 @@
 import serial
 import serial.tools.list_ports
-from PySide6.QtCore import QObject, Signal, QThread, Slot
-
+from PySide6.QtCore import QObject, QThread, Signal, Slot
 
 class ArduinoController(QObject):
-    """
-    Contrôleur pour gérer la communication avec une carte Arduino.
-    Émet un signal chaque fois qu'une donnée est reçue.
-    """
-
     data_received = Signal(str)
+    connection_status_changed = Signal(bool)
 
-    def __init__(self, port_combobox, status_label):
+    def __init__(self, port_combobox=None, status_label=None):
         super().__init__()
         self.port_combobox = port_combobox
         self.status_label = status_label
@@ -22,33 +17,47 @@ class ArduinoController(QObject):
         self.reader_thread.started.connect(self._read_loop)
 
     def detect_serial_ports(self):
-        self.port_combobox.clear()
+        if self.port_combobox:
+            self.port_combobox.clear()
         ports = serial.tools.list_ports.comports()
-        if not ports:
+        if not ports and self.port_combobox:
             self.port_combobox.addItem("Aucun port série détecté")
         else:
             for port in ports:
-                self.port_combobox.addItem(f"{port.device} - {port.description}")
+                if self.port_combobox:
+                    self.port_combobox.addItem(f"{port.device} - {port.description}")
 
     def connect_to_arduino(self):
+        if not self.port_combobox:
+            self._emit_connection_status(False)
+            return
+
         selected = self.port_combobox.currentText()
         if " - " not in selected:
             self._update_status("🔴 Aucun port valide sélectionné", "red")
+            self._emit_connection_status(False)
             return
 
         port = selected.split(" - ")[0]
         try:
             self.serial_connection = serial.Serial(port, baudrate=9600, timeout=1)
             self._update_status(f"🟢 Connecté à {port}", "green")
-            self.port_combobox.clear()
-            self.port_combobox.addItem(port)
+            if self.port_combobox:
+                self.port_combobox.clear()
+                self.port_combobox.addItem(port)
             self.start_reading()
+            self._emit_connection_status(True)
         except serial.SerialException:
             self._update_status(f"🔴 Erreur de connexion à {port}", "red")
+            self._emit_connection_status(False)
+
+    def _emit_connection_status(self, connected: bool):
+        self.connection_status_changed.emit(connected)
 
     def _update_status(self, text, color):
-        self.status_label.setText(text)
-        self.status_label.setStyleSheet(f"color: {color}; font-weight: bold")
+        if self.status_label:
+            self.status_label.setText(text)
+            self.status_label.setStyleSheet(f"color: {color}; font-weight: bold")
 
     def is_connected(self):
         return self.serial_connection and self.serial_connection.is_open
@@ -87,3 +96,4 @@ class ArduinoController(QObject):
         if self.is_connected():
             self.serial_connection.close()
         self._update_status("Statut : Déconnecté", "black")
+        self._emit_connection_status(False)

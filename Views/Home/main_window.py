@@ -14,7 +14,9 @@ from Views.image.modifier_photo import MODIFIER_IMAGES_PAGE
 from Views.admin.enregistrer import ENREGISTREMENT_ADMIN
 from Views.admin.modifier import MODIFIER_ADMIN
 from Views.historique.display_history import DISPLAY_HISTORY
-from  Views.mq3_alcool.valeur_mq3_arduino import MQ3MinimalGUI
+from  Views.mq3_alcool.mq3_arduino_value_ui import Mq3ValueGui
+from Controllers.arduino_controller import ArduinoController
+
 
 
 class MAINWINDOW(QMainWindow):
@@ -35,15 +37,17 @@ class MAINWINDOW(QMainWindow):
 
         # Ajouter les différentes pages à l'onglet
         # Il est important de passer 'self' comme parent si les pages ont besoin d'interagir avec la fenêtre principale
+
+        self.arduino_controller = ArduinoController()
+
         self.pages = {
-            "Gestion Admins": ENREGISTREMENT_ADMIN(parent=self),  # Renommé pour plus de clarté
+            "Gestion Admins": ENREGISTREMENT_ADMIN(parent=self),
             "Gestion Chauffeurs": ENREGISTREMENT_CHAUFFEUR(parent=self),
             "Ajouter Images": IMAGE_VIEW(parent=self),
             "Afficher Images": DISPLAY_IMAGES(parent=self),
             "Historique": DISPLAY_HISTORY(parent=self),
-            "Arduino Value":MQ3MinimalGUI()
+            "Arduino Value": Mq3ValueGui(self.arduino_controller)
         }
-
         # Créer les onglets
         self.create_tabs()
 
