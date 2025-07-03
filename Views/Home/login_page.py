@@ -4,7 +4,7 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QPixmap
-from Controllers.arduino_controller import ArduinoController
+# from Controllers.arduino_controller import ArduinoController
 
 
 class LOGINWINDOW(QMainWindow):
@@ -131,6 +131,7 @@ class LOGINWINDOW(QMainWindow):
         self.status_label = QLabel("🔴 Déconnecté")
         self.status_label.setStyleSheet("font-weight: bold; color: red;")
         self.btn_arduino_value=QPushButton("Arduino Value")
+        self.btn_arduino_value.clicked.connect(self.go_to_arduno_value_page)
         self.layout=QHBoxLayout()
         self.layout.addWidget(self.status_label)
         self.layout.addWidget(self.btn_arduino_value)
@@ -171,3 +172,6 @@ class LOGINWINDOW(QMainWindow):
         else:
             self.status_label.setText("🔴 Déconnecté")
             self.status_label.setStyleSheet("font-weight: bold; color: red;")
+
+    def go_to_arduno_value_page(self):
+        self.arduino_value_signal.emit()

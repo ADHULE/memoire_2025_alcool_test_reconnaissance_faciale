@@ -39,6 +39,7 @@ if __name__ == "__main__":
         login.webcam_page_signal.connect(webcam.show)
         window.login_signal.connect(login.show)
         webcam.mainwindow_signal.connect(window.show)
+        login.arduino_value_signal.connect(arduino.show)
 
         # Afficher la fenêtre de connexion
         login.show()

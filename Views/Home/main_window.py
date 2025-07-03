@@ -1,21 +1,20 @@
-from PySide6.QtWidgets import *
-from PySide6.QtCore import *
-from  PySide6.QtGui import *
 import functools
-import os
 
+from PySide6.QtCore import *
+from PySide6.QtGui import *
+from PySide6.QtWidgets import *
+
+from Controllers.arduino_controller import ArduinoController
+from Views.admin.enregistrer import ENREGISTREMENT_ADMIN
+from Views.admin.modifier import MODIFIER_ADMIN
 # Importation des différentes pages
 # Assurez-vous que ces imports sont corrects et que les fichiers existent
 from Views.chauffeur.enregistrer import ENREGISTREMENT_CHAUFFEUR
 from Views.chauffeur.modifier import MODIFIER_CHAUFFEUR
-from Views.image.image_view import IMAGE_VIEW
-from Views.image.photo_display import DISPLAY_IMAGES
-from Views.image.modifier_photo import MODIFIER_IMAGES_PAGE
-from Views.admin.enregistrer import ENREGISTREMENT_ADMIN
-from Views.admin.modifier import MODIFIER_ADMIN
 from Views.historique.display_history import DISPLAY_HISTORY
-from  Views.mq3_alcool.mq3_arduino_value_ui import Mq3ValueGui
-from Controllers.arduino_controller import ArduinoController
+from Views.image.image_view import IMAGE_VIEW
+from Views.image.modifier_photo import MODIFIER_IMAGES_PAGE
+from Views.image.photo_display import DISPLAY_IMAGES
 
 
 
@@ -46,7 +45,7 @@ class MAINWINDOW(QMainWindow):
             "Ajouter Images": IMAGE_VIEW(parent=self),
             "Afficher Images": DISPLAY_IMAGES(parent=self),
             "Historique": DISPLAY_HISTORY(parent=self),
-            "Arduino Value": Mq3ValueGui(self.arduino_controller)
+
         }
         # Créer les onglets
         self.create_tabs()
@@ -154,3 +153,4 @@ class MAINWINDOW(QMainWindow):
         """Ouvre la fenêtre de modification de chauffeur."""
         modifier_chauffeur = MODIFIER_CHAUFFEUR(chauffeur_id, parent=self)
         modifier_chauffeur.exec()
+
