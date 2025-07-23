@@ -25,7 +25,7 @@ class MODIFIER_CHAUFFEUR(QDialog):
 
         # Interface utilisateur
         layout = QVBoxLayout(self)
-        layout.addWidget(QLabel("Modifier Chauffeur", alignment=Qt.AlignmentFlag.AlignCenter))
+
 
         form_layout = QGridLayout()
         for i, (key, field) in enumerate(self.fields.items()):
@@ -41,6 +41,7 @@ class MODIFIER_CHAUFFEUR(QDialog):
         btn_layout.addWidget(btn_modifier)
         btn_layout.addWidget(btn_annuler)
         layout.addLayout(btn_layout)
+        layout.addStretch()
 
         self._load_chauffeur_data()
 

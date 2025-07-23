@@ -1,111 +1,124 @@
 import serial
 import serial.tools.list_ports
+import json
 from PySide6.QtCore import QObject, QThread, Signal, Slot
+from PySide6.QtWidgets import QMessageBox
 
 class ArduinoController(QObject):
-    # Signal émis lorsqu'une ligne de données est reçue (format texte brut)
+    """
+    Contrôleur pour gérer la connexion série avec Arduino et lire les données JSON.
+    """
+
     data_received = Signal(str)
-    # Signal émis lorsque l'état de connexion change (True si connecté, False sinon)
     connection_status_changed = Signal(bool)
 
     def __init__(self, port_combobox=None, status_label=None):
         super().__init__()
-        self.port_combobox = port_combobox              # Référence au menu déroulant (QComboBox)
-        self.status_label = status_label                # Référence à l'étiquette de statut (QLabel)
-        self.serial_connection = None                   # Objet Serial pour la communication
-        self.reader_thread = QThread()                  # Thread séparé pour la lecture série
-        self.reading = False                            # Indicateur de lecture active
-        self.moveToThread(self.reader_thread)           # Déplace l'objet vers le thread secondaire
-        self.reader_thread.started.connect(self._read_loop)  # Lance la boucle de lecture à l'activation
+        self.port_combobox = port_combobox
+        self.status_label = status_label
+        self.serial_connection = None
+        self.last_alcohol_value = None  # Stocke le dernier taux d'alcool (float)
+        self.reader_thread = QThread()
+        self.reading = False
+        self.moveToThread(self.reader_thread)
+        self.reader_thread.started.connect(self._read_loop)
 
     def detect_serial_ports(self):
-        # Détection des ports série disponibles et affichage dans la combobox
         if self.port_combobox:
             self.port_combobox.clear()
         ports = serial.tools.list_ports.comports()
+        for port in ports:
+            if self.port_combobox:
+                self.port_combobox.addItem(f"{port.device} - {port.description}")
         if not ports and self.port_combobox:
             self.port_combobox.addItem("Aucun port série détecté")
-        else:
-            for port in ports:
-                if self.port_combobox:
-                    self.port_combobox.addItem(f"{port.device} - {port.description}")
 
     def connect_to_arduino(self):
-        # Tente de se connecter au port série sélectionné dans la combobox
         if not self.port_combobox:
-            self._emit_connection_status(False)
+            self.connection_status_changed.emit(False)
             return
 
         selected = self.port_combobox.currentText()
         if " - " not in selected:
             self._update_status("🔴 Aucun port valide sélectionné", "red")
-            self._emit_connection_status(False)
+            self.connection_status_changed.emit(False)
             return
 
         port = selected.split(" - ")[0]
         try:
-            self.serial_connection = serial.Serial(port, baudrate=9600, timeout=1)
+            self.serial_connection = serial.Serial(port, 9600, timeout=1)
             self._update_status(f"🟢 Connecté à {port}", "green")
-            if self.port_combobox:
-                self.port_combobox.clear()
-                self.port_combobox.addItem(port)
+            self.port_combobox.clear()
+            self.port_combobox.addItem(port)
             self.start_reading()
-            self._emit_connection_status(True)
+            self.connection_status_changed.emit(True)
         except serial.SerialException:
-            self._update_status(f"🔴 Erreur de connexion à {port}", "red")
-            self._emit_connection_status(False)
-
-    def _emit_connection_status(self, connected: bool):
-        # Émet le signal pour notifier l'état de connexion
-        self.connection_status_changed.emit(connected)
+            self._update_status("🔴 Erreur de connexion", "red")
+            self.connection_status_changed.emit(False)
 
     def _update_status(self, text, color):
-        # Met à jour le texte et la couleur de l'étiquette de statut
         if self.status_label:
             self.status_label.setText(text)
-            self.status_label.setStyleSheet(f"color: {color}; font-weight: bold")
+            self.status_label.setStyleSheet(f"color: {color}; font-weight: bold;")
 
     def is_connected(self):
-        # Vérifie si la connexion série est établie et ouverte
         return self.serial_connection and self.serial_connection.is_open
 
     def start_reading(self):
-        # Démarre le thread de lecture si non déjà en cours
         if not self.reader_thread.isRunning():
             self.reading = True
             self.reader_thread.start()
 
     @Slot()
     def _read_loop(self):
-        # Boucle qui lit les données en provenance de l'Arduino en continu
         while self.reading and self.is_connected():
             try:
                 if self.serial_connection.in_waiting:
                     line = self.serial_connection.readline().decode("utf-8").strip()
                     if line:
-                        self.data_received.emit(line)  # Émet la ligne reçue via signal
+                        print(f"[SERIAL] Reçu : {line}")  # Journalisation brute
+                        self.extract_alcohol_value(line)
+                        self.data_received.emit(line)
             except Exception as e:
-                print(f"[Erreur de lecture] {e}")
+                print(f"[Erreur lecture série] {e}")
+
+    def extract_alcohol_value(self, raw_line: str):
+        try:
+            data = json.loads(raw_line)
+            if "alcohol" in data:
+                raw_value = float(data["alcohol"])
+                normalized = round(raw_value / 1023.0, 3)
+                self.last_alcohol_value = normalized
+                print(f"[INFO] Valeur d'alcool extraite : {self.last_alcohol_value}")
+            else:
+                print("[WARNING] Clé 'alcohol' absente.")
+        except (json.JSONDecodeError, ValueError) as e:
+            print(f"[ERROR] Erreur de parsing JSON : {e}")
 
     def stop_reading(self):
-        # Arrête proprement la lecture et le thread associé
         self.reading = False
         if self.reader_thread.isRunning():
             self.reader_thread.quit()
             self.reader_thread.wait()
 
     def send_command(self, cmd: str):
-        # Envoie une commande (chaîne) vers l'Arduino via le port série
         if self.is_connected():
             try:
-                self.serial_connection.write(cmd.encode())
+                self.serial_connection.write((cmd + "\n").encode())
             except Exception as e:
                 print(f"[Erreur d'envoi] {e}")
 
     def close_connection(self):
-        # Ferme la connexion série proprement et met à jour l'interface
-        self.stop_reading()
-        if self.is_connected():
-            self.serial_connection.close()
-        self._update_status("Statut : Déconnecté", "black")
-        self._emit_connection_status(False)
+        try:
+            confirmation = QMessageBox.question(
+                None, "Confirmation", "Voulez-vous vraiment déconnecter ?",
+                QMessageBox.Yes | QMessageBox.No
+            )
+            if confirmation == QMessageBox.Yes:
+                self.stop_reading()
+                if self.is_connected():
+                    self.serial_connection.close()
+                self._update_status("Déconnecté", "black")
+                self.connection_status_changed.emit(False)
+        except Exception as e:
+            QMessageBox.warning(None, "Erreur", f"Déconnexion échouée : {e}")

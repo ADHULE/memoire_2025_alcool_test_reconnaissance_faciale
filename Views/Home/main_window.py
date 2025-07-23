@@ -17,7 +17,6 @@ from Views.image.modifier_photo import MODIFIER_IMAGES_PAGE
 from Views.image.photo_display import DISPLAY_IMAGES
 
 
-
 class MAINWINDOW(QMainWindow):
     # Signal pour retourner à la page de connexion
     login_signal = Signal()
@@ -54,12 +53,14 @@ class MAINWINDOW(QMainWindow):
         self.menu_button = QToolButton(self)
         self.menu_button.setPopupMode(QToolButton.InstantPopup)
         self.menu_button.setMenu(QMenu(self.menu_button))
+
         # Initialement invisible, sera géré par resizeEvent et on_tab_changed
         self.menu_button.setVisible(False)
 
         # Ajout du bouton de déconnexion
         self.logout_button = QPushButton("Déconnexion")
         self.logout_button.clicked.connect(self.back_to_login_page)
+
         # Assurez-vous que le bouton de déconnexion est toujours visible
         self.tab_widget.setCornerWidget(self.logout_button, Qt.TopRightCorner)
 

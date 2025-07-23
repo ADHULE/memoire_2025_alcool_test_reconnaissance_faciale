@@ -1,7 +1,7 @@
 #general_frame {
     background-color: #1A1A2E; /* Bleu nuit pour la technologie et la surveillance */
     /* border: 2px solid #0F3460; Bordure bleu foncé */
-    border: 2px solid wheat; /* Bordure bleu foncé */
+    border: 2px solid black; /* Bordure bleu foncé */
     padding: 20px;
     border-radius: 10px;
 }
@@ -28,4 +28,8 @@ QPushButton {
 
 QPushButton:hover {
     background-color: #E94560; /* Rouge lorsque survolé, pour un effet d’alerte */
+}
+
+#sections_layout {
+    border: 1px solid white;
 }

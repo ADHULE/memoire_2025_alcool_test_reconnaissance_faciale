@@ -2,7 +2,7 @@ from PySide6.QtWidgets import *
 from PySide6.QtCore import *
 from Controllers.chauffeur_controller import CHAUFFEUR_CONTROLLER
 from Controllers.image_controller import IMAGE_CONTROLLER
-from Views.image.camera_view import CameraView # Importez la nouvelle vue caméra
+
 
 class IMAGE_VIEW(QWidget):
     def __init__(self, parent=None):
@@ -17,7 +17,7 @@ class IMAGE_VIEW(QWidget):
 
         # Sélection du Chauffeur (avant l'ajout)
         self.chauffeur_group = QGroupBox("Sélectionner un chauffeur pour la photo")
-        
+
         self.chauffeur_layout = QVBoxLayout()
 
         self.filter_chauffeur_input = self._create_line_edit("Filtrer par nom", self.filter_chauffeurs)
@@ -33,8 +33,7 @@ class IMAGE_VIEW(QWidget):
         main_layout.addWidget(self.chauffeur_group)
 
         # Bouton pour ouvrir la caméra
-        self.open_camera_button = self._create_button("Ouvrir la caméra", self.open_camera_page)
-        main_layout.addWidget(self.open_camera_button)
+
 
         # Formulaire Ajout d'Images (pour parcourir les fichiers)
         self.form_group = QGroupBox("Ajouter une image depuis un fichier")
@@ -129,17 +128,7 @@ class IMAGE_VIEW(QWidget):
         filtered_chauffeurs = [c for c in chauffeurs if filter_text.lower() in f"{c.nom} {c.prenom}".lower()]
         self.populate_chauffeur_list(filtered_chauffeurs)
 
-    def open_camera_page(self):
-        """Ouvre la page dédiée à la caméra."""
-        if self.selected_chauffeur_id is not None:
-            self.camera_view = CameraView()
-            # Vous pourriez passer l'ID du chauffeur à la CameraView si nécessaire
-            self.camera_view.set_chauffeur_id(self.selected_chauffeur_id)
-            self.camera_view.show()
-            # Connecter un signal de la CameraView pour récupérer le chemin de l'image enregistrée
-            self.camera_view.finished.connect(self.handle_captured_image_path) # Assurez-vous que 'finished' est émis
-        else:
-            QMessageBox.warning(self, "Avertissement", "Veuillez sélectionner un chauffeur avant d'ouvrir la caméra.")
+
 
     def handle_captured_image_path(self, file_path):
         """Récupère le chemin de l'image capturée depuis la CameraView."""

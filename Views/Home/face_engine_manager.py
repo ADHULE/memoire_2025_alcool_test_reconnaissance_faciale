@@ -1,6 +1,5 @@
 # face_engine_manager.py
 import numpy as np
-import cv2
 from insightface.app import FaceAnalysis
 
 

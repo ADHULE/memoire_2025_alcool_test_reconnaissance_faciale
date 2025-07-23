@@ -1,10 +1,12 @@
-import sys
 import os
+import sys
+
 from PySide6.QtWidgets import QApplication, QMessageBox
-from Views.Home.main_window import MAINWINDOW
-from Views.Home.login_page import LOGINWINDOW
-from Views.Home.webcam_page import ACCER_WEBCAMERA
+
 from Controllers.arduino_controller import ArduinoController
+from Views.Home.login_page import LOGINWINDOW
+from Views.Home.main_window import MAINWINDOW
+from Views.Home.face_recognition_camera import FACE_RECOGNITION_CAMERA
 from Views.mq3_alcool.mq3_arduino_value_ui import Mq3ValueGui
 
 if __name__ == "__main__":
@@ -31,7 +33,7 @@ if __name__ == "__main__":
         window = MAINWINDOW()
         arduino_controller = ArduinoController()
         login = LOGINWINDOW(arduino_controller)
-        webcam = ACCER_WEBCAMERA()
+        webcam = FACE_RECOGNITION_CAMERA()
         arduino=Mq3ValueGui(arduino_controller)
 
         # Connexion des signaux
