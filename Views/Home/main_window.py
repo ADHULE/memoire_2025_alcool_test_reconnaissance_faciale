@@ -1,20 +1,24 @@
 import functools
+import os
 
-from PySide6.QtCore import *
-from PySide6.QtGui import *
-from PySide6.QtWidgets import *
+from PySide6.QtCore import Qt, Signal, QSize
+from PySide6.QtGui import QIcon, QFont, QPixmap
+from PySide6.QtWidgets import (
+    QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
+    QPushButton, QStackedWidget, QMessageBox, QFrame, QLabel, QSpacerItem, QSizePolicy
+)
 
 from Controllers.arduino_controller import ArduinoController
+# Importation des différentes pages
 from Views.admin.enregistrer import ENREGISTREMENT_ADMIN
 from Views.admin.modifier import MODIFIER_ADMIN
-# Importation des différentes pages
-# Assurez-vous que ces imports sont corrects et que les fichiers existent
 from Views.chauffeur.enregistrer import ENREGISTREMENT_CHAUFFEUR
 from Views.chauffeur.modifier import MODIFIER_CHAUFFEUR
 from Views.historique.display_history import DISPLAY_HISTORY
 from Views.image.image_view import IMAGE_VIEW
 from Views.image.modifier_photo import MODIFIER_IMAGES_PAGE
 from Views.image.photo_display import DISPLAY_IMAGES
+
 
 
 class MAINWINDOW(QMainWindow):
@@ -24,20 +28,12 @@ class MAINWINDOW(QMainWindow):
     def __init__(self):
         super().__init__()
 
-        self.setWindowTitle("GESTION DE DECTEUR D'ALCOOL ET RECONNAISSANCE FACIALE")
-        # icon_path = os.path.abspath("Images/Logo.ico")
-        # self.setWindowIcon(QIcon(icon_path))
-        self.setMinimumSize(800, 600)  # Suggestion: Set a minimum size for better initial display
-
-        # Créer le widget d'onglets
-        self.tab_widget = QTabWidget()
-        self.setCentralWidget(self.tab_widget)
-
-        # Ajouter les différentes pages à l'onglet
-        # Il est important de passer 'self' comme parent si les pages ont besoin d'interagir avec la fenêtre principale
+        self.setWindowTitle("GESTION DE DÉTECTEUR D'ALCOOL ET RECONNAISSANCE FACIALE")
+        self.setMinimumSize(1000, 700) # Adjusted minimum size for new layout
 
         self.arduino_controller = ArduinoController()
 
+        # Initialize pages dictionary with instances
         self.pages = {
             "Gestion Admins": ENREGISTREMENT_ADMIN(parent=self),
             "Gestion Chauffeurs": ENREGISTREMENT_CHAUFFEUR(parent=self),
@@ -46,72 +42,126 @@ class MAINWINDOW(QMainWindow):
             "Historique": DISPLAY_HISTORY(parent=self),
 
         }
-        # Créer les onglets
-        self.create_tabs()
 
-        # Créer le bouton de menu (pour les écrans étroits)
-        self.menu_button = QToolButton(self)
-        self.menu_button.setPopupMode(QToolButton.InstantPopup)
-        self.menu_button.setMenu(QMenu(self.menu_button))
+        self._setup_ui() # Call the new setup method
+        self._load_stylesheet("Styles/main_window_styles.css") # Load QSS for styling
 
-        # Initialement invisible, sera géré par resizeEvent et on_tab_changed
-        self.menu_button.setVisible(False)
+    def _load_stylesheet(self, path: str):
+        """
+        Loads an external CSS stylesheet.
+        """
+        try:
+            with open(path, "r") as file:
+                self.setStyleSheet(file.read())
+        except FileNotFoundError:
+            QMessageBox.warning(self, "Erreur", f"Feuille de style non trouvée : {path}")
+        except Exception as e:
+            QMessageBox.critical(self, "Erreur", f"Impossible de charger la feuille de style : {e}")
 
-        # Ajout du bouton de déconnexion
+    def _setup_ui(self):
+        """
+        Sets up the main UI with a vertical sidebar navigation and a stacked widget for content.
+        """
+        central_widget = QWidget()
+        self.setCentralWidget(central_widget)
+        main_layout = QHBoxLayout(central_widget)
+        main_layout.setContentsMargins(0, 0, 0, 0) # No margins for the main layout
+        main_layout.setSpacing(0) # No spacing between sidebar and content
+
+        # --- Sidebar Navigation ---
+        self.sidebar_frame = QFrame()
+        self.sidebar_frame.setObjectName("sidebarFrame")
+        self.sidebar_frame.setFixedWidth(200) # Fixed width for the sidebar
+        sidebar_layout = QVBoxLayout(self.sidebar_frame)
+        sidebar_layout.setContentsMargins(10, 10, 10, 10)
+        sidebar_layout.setSpacing(10)
+
+        # Application Logo/Title
+        logo_label = QLabel()
+        logo_pixmap = QPixmap("icons/app_logo.png").scaled(100, 100, Qt.KeepAspectRatio, Qt.SmoothTransformation) # Placeholder
+        logo_label.setPixmap(logo_pixmap)
+        logo_label.setAlignment(Qt.AlignCenter)
+        logo_label.setObjectName("appLogo")
+        sidebar_layout.addWidget(logo_label)
+
+        app_title = QLabel("Menu Principal")
+        app_title.setAlignment(Qt.AlignCenter)
+        app_title.setObjectName("appTitle")
+        sidebar_layout.addWidget(app_title)
+        sidebar_layout.addSpacerItem(QSpacerItem(20, 20, QSizePolicy.Minimum, QSizePolicy.Fixed)) # Spacer
+
+        # Navigation Buttons
+        self.nav_buttons = {}
+        for page_name, page_instance in self.pages.items():
+            button = QPushButton(page_name)
+            button.setObjectName("navButton")
+            button.setIcon(self._get_icon_for_page(page_name)) # Set icon
+            button.setIconSize(QSize(24, 24))
+            # Use functools.partial to pass the page_instance directly
+            button.clicked.connect(functools.partial(self.show_page, page_instance))
+            sidebar_layout.addWidget(button)
+            self.nav_buttons[page_name] = button # Store reference to button
+
+        sidebar_layout.addStretch() # Push buttons to the top
+
+        # Logout Button at the bottom of the sidebar
         self.logout_button = QPushButton("Déconnexion")
+        self.logout_button.setObjectName("logoutButton")
+        self.logout_button.setIcon(QIcon("icons/logout_icon.png")) # Placeholder
+        self.logout_button.setIconSize(QSize(24, 24))
         self.logout_button.clicked.connect(self.back_to_login_page)
+        sidebar_layout.addWidget(self.logout_button)
 
-        # Assurez-vous que le bouton de déconnexion est toujours visible
-        self.tab_widget.setCornerWidget(self.logout_button, Qt.TopRightCorner)
+        main_layout.addWidget(self.sidebar_frame)
 
-        # Connecter le signal de changement d'onglet
-        # Ceci permet de gérer la visibilité du menu_button si nécessaire
-        self.tab_widget.currentChanged.connect(self.on_tab_changed)
+        # --- Content Area (Stacked Widget) ---
+        self.stacked_widget = QStackedWidget()
+        self.stacked_widget.setObjectName("contentArea")
+        main_layout.addWidget(self.stacked_widget)
 
-    def create_tabs(self):
+        # Add all pages to the stacked widget
+        for page_name, page_instance in self.pages.items():
+            self.stacked_widget.addWidget(page_instance)
+
+        # Set the initial page (e.g., "Gestion Admins")
+        self.show_page(self.pages["Gestion Admins"]) # Display the first page by default
+
+    def _get_icon_for_page(self, page_name: str) -> QIcon:
         """
-        Ajoute les pages aux onglets du widget tabulaire.
+        Returns a QIcon based on the page name.
+        You'll need to create these icon files in your 'icons' directory.
         """
-        for page_name, page in self.pages.items():
-            self.tab_widget.addTab(page, page_name)
+        icon_map = {
+            "Gestion Admins": "icons/admin_icon.png",
+            "Gestion Chauffeurs": "icons/driver_icon.png",
+            "Ajouter Images": "icons/add_image_icon.png",
+            "Afficher Images": "icons/view_image_icon.png",
+            "Historique": "icons/history_icon.png",
 
-    def on_tab_changed(self, index):
+            # Add more mappings as needed
+        }
+        path = icon_map.get(page_name, "icons/default_icon.png") # Default icon if not found
+        return QIcon(path)
+
+    def show_page(self, page_instance: QWidget):
         """
-        Gère la logique spécifique lors du changement d'onglet si nécessaire.
-        Vous pourriez vouloir ajuster le menu_button ici si son comportement dépend de l'onglet.
-        Actuellement, il n'y a pas de logique spécifique ici qui rendrait le bouton de menu visible
-        uniquement pour l'index 2. Le `resizeEvent` gère la visibilité basée sur la largeur.
+        Displays the specified page in the stacked widget.
+        Highlights the corresponding navigation button.
         """
-        # Si vous vouliez que le menu_button soit visible SEULEMENT pour un onglet spécifique (ex: index 2),
-        # vous pourriez le réactiver ici, mais le `resizeEvent` le gère déjà.
-        # self.menu_button.setVisible(self.is_narrow and index == 2)
-        pass  # Pas de changement fonctionnel nécessaire ici pour le moment.
+        self.stacked_widget.setCurrentWidget(page_instance)
 
-    def resizeEvent(self, event):
-        """
-        Ajuste l'affichage des onglets et du bouton de menu en fonction de la taille de la fenêtre.
-        """
-        # Mise à jour de l'état "is_narrow"
-        is_narrow = event.size().width() < 600
-        self.tab_widget.tabBar().setVisible(not is_narrow)
+        # Update button styling to indicate active page
+        for name, button in self.nav_buttons.items():
+            if self.pages[name] == page_instance:
+                button.setProperty("active", True)
+            else:
+                button.setProperty("active", False)
+            button.style().polish(button) # Repolish to apply stylesheet changes
 
-        # Le bouton de menu est visible si la fenêtre est étroite
-        self.menu_button.setVisible(is_narrow)
-
-        if is_narrow:
-            # Reconstruire le menu à chaque redimensionnement en mode étroit
-            # pour s'assurer qu'il reflète les onglets actuels.
-            self.menu_button.menu().clear()
-            for i in range(self.tab_widget.count()):
-                action = self.menu_button.menu().addAction(self.tab_widget.tabText(i))
-                # Utilisation de functools.partial pour s'assurer que le bon index est passé
-                action.triggered.connect(functools.partial(self.tab_widget.setCurrentIndex, i))
-
-        super().resizeEvent(event)
 
     def back_to_login_page(self):
         """
-        Émet le signal pour retourner à la page de connexion et ferme la fenêtre principale.
+        Emits the signal to return to the login page and closes the main window.
         """
         confirmation = QMessageBox.question(
             self, "Confirmation", "Voulez-vous vraiment vous déconnecter ?",
@@ -120,38 +170,32 @@ class MAINWINDOW(QMainWindow):
 
         if confirmation == QMessageBox.Yes:
             try:
-                self.login_signal.emit()  # Émet le signal pour que la logique externe prenne le relais
-                self.close()  # Ferme cette fenêtre principale
+                # Disconnect any active camera streams or Arduino connections before closing
+                if "Caméra" in self.pages and hasattr(self.pages["Caméra"], 'camera_controller'):
+                    self.pages["Caméra"].camera_controller.stop_camera()
+                if self.arduino_controller.is_connected():
+                    self.arduino_controller.close_connection()
+
+                self.login_signal.emit()
+                self.close()
             except Exception as e:
-                # Correction: Le premier argument de QMessageBox.information doit être le parent
                 QMessageBox.critical(self, "Erreur de Déconnexion",
                                      f"Une erreur est survenue lors de la déconnexion : {str(e)}")
 
-    def navigate_to(self, page_name):
-        """
-        Permet de naviguer vers une page spécifique en utilisant son nom défini dans self.pages.
-        """
-        if page_name in self.pages:
-            self.tab_widget.setCurrentWidget(self.pages[page_name])
-        else:
-            QMessageBox.warning(self, "Page Non Trouvée", f"La page '{page_name}' n'existe pas.")
-
     # --- NAVIGATION VERS LES PAGES DE MODIFICATION (Pop-up Dialogues) ---
-    # Ces méthodes ouvrent des fenêtres de modification comme des dialogues modaux.
+    # These methods open modification windows as modal dialogues.
 
     def open_modify_photo_page(self, id_photo):
-        """Ouvre la fenêtre de modification d'image."""
-        # Passer 'self' comme parent à la fenêtre de modification est une bonne pratique
+        """Opens the image modification window."""
         modifier_photo = MODIFIER_IMAGES_PAGE(id_photo, parent=self)
-        modifier_photo.exec()  # Ouvre comme un dialogue modal
+        modifier_photo.exec()
 
     def open_modify_admin_page(self, admin_id):
-        """Ouvre la fenêtre de modification d'administrateur."""
+        """Opens the administrator modification window."""
         modifier_admin = MODIFIER_ADMIN(admin_id, parent=self)
         modifier_admin.exec()
 
     def open_modify_chauffeur_page(self, chauffeur_id):
-        """Ouvre la fenêtre de modification de chauffeur."""
+        """Opens the driver modification window."""
         modifier_chauffeur = MODIFIER_CHAUFFEUR(chauffeur_id, parent=self)
         modifier_chauffeur.exec()
-
