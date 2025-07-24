@@ -1,93 +1,72 @@
-import logging
-from sqlalchemy.exc import SQLAlchemyError
 from Models.database_model import my_session
-from Models.historitique_model import HISTORIQUE  # Assure-toi que le nom du fichier est bien "historique_model.py"
+from Models.historitique_model import HISTORIQUE
+from datetime import datetime
 
 class HISTORIQUE_CONTROLLER:
-    """Contrôleur pour gérer les opérations CRUD sur les historiques."""
+    def __init__(self):
+        self.db = my_session
 
-    def new_history(self, jour_heure, chauffeur_id, event_type, person_info, alcool_value):
-        """Ajoute un nouvel événement historique dans la base de données."""
-        try:
-            new = HISTORIQUE(
-                jour_heure=jour_heure,
-                chauffeur_id=chauffeur_id,
-                event_type=event_type,
-                person_info=person_info,
-                alcool_value=alcool_value
-            )
-            my_session.add(new)
-            my_session.commit()
-            my_session.refresh(new)
-            return new
-        except SQLAlchemyError as e:
-            my_session.rollback()
-            logging.error(f"Erreur lors de l'enregistrement de l'historique : {str(e)}", exc_info=True)
+    # Créer un nouvel historique
+    def new_history(self, chauffeur_id: int, jour_heure: datetime, event_type: str,
+                    person_info: str, alcool_value: float, image_id: int = None) -> HISTORIQUE:
+        historique = HISTORIQUE(
+            chauffeur_id=chauffeur_id,
+            jour_heure=jour_heure,
+            event_type=event_type,
+            person_info=person_info,
+            alcool_value=alcool_value,
+            image_id=image_id
+        )
+        self.db.add(historique)
+        self.db.commit()
+        self.db.refresh(historique)
+        return historique
+
+    # Lire tout
+    def get_all_histories(self):
+        return self.db.query(HISTORIQUE).order_by(HISTORIQUE.jour_heure.desc()).all()
+
+    # Lire par ID
+    def get_by_id(self, historique_id: int) -> HISTORIQUE:
+        return self.db.query(HISTORIQUE).filter(HISTORIQUE.id == historique_id).first()
+
+    # Mettre à jour
+    def update_history(self, historique_id: int, **kwargs):
+        historique = self.get_by_id(historique_id)
+        if not historique:
             return None
+        for key, value in kwargs.items():
+            if hasattr(historique, key):
+                setattr(historique, key, value)
+        self.db.commit()
+        self.db.refresh(historique)
+        return historique
 
-    def get_histories(self):
-        """Retourne tous les enregistrements historiques."""
-        try:
-            return my_session.query(HISTORIQUE).all()
-        except SQLAlchemyError as e:
-            logging.error(f"Erreur de chargement des historiques : {str(e)}", exc_info=True)
-            return []
-
-    def get_history(self, history_id):
-        """Récupère un historique par son identifiant unique."""
-        try:
-            return my_session.query(HISTORIQUE).filter_by(id=history_id).first()
-        except SQLAlchemyError as e:
-            logging.error(f"Erreur de récupération de l'historique : {str(e)}", exc_info=True)
-            return None
-
-    def update_history(self, history_id, **kwargs):
-        """Met à jour dynamiquement les champs d’un historique existant."""
-        try:
-            history = self.get_history(history_id)
-            if not history:
-                logging.warning(f"Aucun historique trouvé avec l'ID {history_id}")
-                return None
-
-            valid_fields = {"jour_heure", "chauffeur_id", "event_type", "person_info", "alcool_value"}
-            for key, value in kwargs.items():
-                if key in valid_fields:
-                    setattr(history, key, value)
-
-            my_session.commit()
-            my_session.refresh(history)
-            return history
-        except SQLAlchemyError as e:
-            my_session.rollback()
-            logging.error(f"Erreur de mise à jour de l'historique : {str(e)}", exc_info=True)
-            return None
-
-    def delete_history(self, history_id):
-        """Supprime un historique par son identifiant."""
-        try:
-            history = self.get_history(history_id)
-            if history:
-                my_session.delete(history)
-                my_session.commit()
-                return True
-            logging.warning(f"Aucun historique à supprimer avec l'ID {history_id}")
+    # Supprimer
+    def delete_history(self, historique_id: int) -> bool:
+        historique = self.get_by_id(historique_id)
+        if not historique:
             return False
-        except SQLAlchemyError as e:
-            my_session.rollback()
-            logging.error(f"Erreur lors de la suppression de l'historique : {str(e)}", exc_info=True)
-            return False
+        self.db.delete(historique)
+        self.db.commit()
+        return True
 
-    def filter_history(self, start_date=None, end_date=None, event_type=None):
-        """Filtre les historiques selon la date et/ou le type d’événement."""
-        try:
-            query = my_session.query(HISTORIQUE)
-            if start_date:
-                query = query.filter(HISTORIQUE.jour_heure >= start_date)
-            if end_date:
-                query = query.filter(HISTORIQUE.jour_heure <= end_date)
-            if event_type:
-                query = query.filter(HISTORIQUE.event_type == event_type)
-            return query.all()
-        except SQLAlchemyError as e:
-            logging.error(f"Erreur lors du filtrage de l'historique : {str(e)}", exc_info=True)
-            return []
+    # 🔍 Filtrer par chauffeur
+    def get_by_chauffeur(self, chauffeur_id: int):
+        return self.db.query(HISTORIQUE).filter(HISTORIQUE.chauffeur_id == chauffeur_id).all()
+
+    # Filtrer par type d'événement
+    def get_by_event_type(self, type_str: str):
+        return self.db.query(HISTORIQUE).filter(HISTORIQUE.event_type.ilike(f"%{type_str}%")).all()
+
+    # Filtrer par intervalle de date
+    def get_by_date_range(self, start: datetime, end: datetime):
+        return self.db.query(HISTORIQUE).filter(HISTORIQUE.jour_heure.between(start, end)).all()
+
+    # Filtrer par taux d’alcool
+    def get_by_alcool_level(self, min_value: float = 0.5):
+        return self.db.query(HISTORIQUE).filter(HISTORIQUE.alcool_value >= min_value).all()
+
+    # Filtrer par image associée
+    def get_by_image(self, image_id: int):
+        return self.db.query(HISTORIQUE).filter(HISTORIQUE.image_id == image_id).all()

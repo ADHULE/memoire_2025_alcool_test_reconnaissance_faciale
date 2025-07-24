@@ -7,7 +7,7 @@ class IMAGE(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     url = Column(String(255), nullable=False)
-
     personne_id = Column(Integer, ForeignKey('personnes.id'), nullable=False)
-    personne = relationship('PERSONNE', back_populates='images')
 
+    personne = relationship('PERSONNE', back_populates='images')
+    historique = relationship("HISTORIQUE", back_populates="image", uselist=False)

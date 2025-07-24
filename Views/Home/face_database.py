@@ -32,7 +32,7 @@ class FaceDatabase:
                         })
             except Exception as e:
                 print(f"Erreur encodage {chauf.nom}: {e}")
-
+    #
     def identify(self, embedding):
         best_match = {"name": "Inconnu", "score": 0.0}
         for profile in self.db:

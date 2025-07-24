@@ -17,7 +17,7 @@ class FACE_RECOGNITION_CAMERA(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("GESTION DE LA RECONNAISSANCE FACIALE")
-        self.setGeometry(100, 100, 1200, 800)  # Initial window size for better view
+        self.resize(800, 600)
 
         # Contrôleurs
         self.person_controller = CHAUFFEUR_CONTROLLER()

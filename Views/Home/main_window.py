@@ -107,7 +107,7 @@ class MAINWINDOW(QMainWindow):
         # Logout Button at the bottom of the sidebar
         self.logout_button = QPushButton("Déconnexion")
         self.logout_button.setObjectName("logoutButton")
-        self.logout_button.setIcon(QIcon("icons/logout_icon.png")) # Placeholder
+        self.logout_button.setIcon(QIcon("Icons/logout.png"))
         self.logout_button.setIconSize(QSize(24, 24))
         self.logout_button.clicked.connect(self.back_to_login_page)
         sidebar_layout.addWidget(self.logout_button)
@@ -132,11 +132,11 @@ class MAINWINDOW(QMainWindow):
         You'll need to create these icon files in your 'icons' directory.
         """
         icon_map = {
-            "Gestion Admins": "icons/admin_icon.png",
-            "Gestion Chauffeurs": "icons/driver_icon.png",
-            "Ajouter Images": "icons/add_image_icon.png",
-            "Afficher Images": "icons/view_image_icon.png",
-            "Historique": "icons/history_icon.png",
+            "Gestion Admins": "Icons/admin.png",
+            "Gestion Chauffeurs": "Icons/driver_icon.png",
+            "Ajouter Images": "Icons/add_image_icon.png",
+            "Afficher Images": "Icons/view_image_icon.png",
+            "Historique": "Icons/history_icon.png",
 
             # Add more mappings as needed
         }

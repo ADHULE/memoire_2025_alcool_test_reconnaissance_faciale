@@ -4,9 +4,6 @@ import cv2
 import numpy as np
 from PySide6.QtCore import QObject, Signal, QTimer
 from insightface.app import FaceAnalysis
-from PySide6.QtWidgets import QMessageBox
-
-from Controllers.historique_controller import HISTORIQUE_CONTROLLER
 
 
 class CameraController(QObject):
@@ -37,7 +34,7 @@ class CameraController(QObject):
             if cap.read()[0]:
                 available.append(f"Caméra {index}")
                 cap.release()
-        return available if available else ["Aucune caméra détectée"]
+        return available if available else []
 
     def load_face_database(self):
         self.face_db.clear()
@@ -49,11 +46,11 @@ class CameraController(QObject):
             for image_obj in images:
                 path = image_obj.url
                 if not os.path.exists(path):
-                    print(f"Avertissement: L'image {path} n'existe pas.")
+                    print(f"[AVERTISSEMENT] Image absente : {path}")
                     continue
                 img = cv2.imread(path)
                 if img is None:
-                    print(f"Avertissement: Impossible de lire l'image {path}.")
+                    print(f"[AVERTISSEMENT] Impossible de lire : {path}")
                     continue
 
                 person = self.person_controller.get_driver_by_id(image_obj.personne_id)
@@ -79,15 +76,13 @@ class CameraController(QObject):
         if self.cap.isOpened():
             self.timer.start(30)
             return True
-        else:
-            self.error_occurred.emit(f"Erreur d’accès caméra ou source invalide: {source}")
-            return False
+        return False
 
     def stop_camera(self):
-        self.timer.stop()
         if self.cap:
+            self.timer.stop()
             self.cap.release()
-        self.cap = None
+            self.cap = None
 
     def determiner_event_type(self, taux: float, seuil=0.5):
         if taux is None:
@@ -124,45 +119,12 @@ class CameraController(QObject):
                         cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 2)
 
             if name != "Inconnu":
-                alcool_value = getattr(self.arduino_controller, 'last_alcohol_value', None)
-                event_type = self.determiner_event_type(alcool_value)
                 self._log_recognition(name, best_score)
-                self._save_to_database(name, matched_id, event_type, alcool_value)
+
                 self.recognized.emit(name, best_score)
 
         self.frame_ready.emit(frame)
 
     def _log_recognition(self, name: str, score: float):
-        print(f"Reconnu: {name} (Score: {score:.2f})")
+        print(f"[INFO] Reconnu : {name} (Score: {score:.2f})")
 
-    def _save_to_database(self, name: str, chauffeur_id: int, event_type: str, alcool_value: float):
-        print(
-            f"[DEBUG] Tentative d'enregistrement - Nom: {name}, ID: {chauffeur_id}, Alcool: {alcool_value}, Type: {event_type}")
-
-        if chauffeur_id is not None and alcool_value is not None:
-            try:
-                timestamp = datetime.datetime.now()
-                historique_ctrl = HISTORIQUE_CONTROLLER()
-
-                result = historique_ctrl.new_history(
-                    jour_heure=timestamp,
-                    chauffeur_id=chauffeur_id,
-                    event_type=event_type,
-                    person_info=name,
-                    alcool_value=alcool_value
-                )
-
-                if result:
-                    # print("[INFO]  Enregistrement réussi dans la base de données.")
-                    QMessageBox.information(None, "Succès", f"Historique enregistré pour {name} à {timestamp}")
-                else:
-                    # print("[WARNING] Enregistrement non confirmé : la méthode new_history n’a rien retourné.")
-                    QMessageBox.warning(None, "Attention", "Échec possible de l'enregistrement.")
-            except Exception as e:
-                # print(f"[ERROR] Erreur lors de l'insertion : {e}")
-                QMessageBox.critical(None, "Erreur", f"Insertion impossible : {e}")
-                self.error_occurred.emit(f"Erreur insertion historique : {e}")
-        else:
-            # print("[INFO] Conditions d'enregistrement non remplies (chauffeur ou alcool manquant)")
-            QMessageBox.information(None, "Information",
-                                    "Visage reconnu ou alcool non détecté — enregistrement ignoré.")
