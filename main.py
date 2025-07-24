@@ -14,7 +14,7 @@ if __name__ == "__main__":
         app = QApplication(sys.argv)
 
         # Vérifier l'existence du fichier CSS avant de le charger
-        css_path = "Styles/general_style.css"
+        css_path = "Styles/main_window_styles.css"
         if os.path.exists(css_path):
 
             try:

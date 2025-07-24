@@ -29,7 +29,7 @@ class MAINWINDOW(QMainWindow):
         super().__init__()
 
         self.setWindowTitle("GESTION DE DÉTECTEUR D'ALCOOL ET RECONNAISSANCE FACIALE")
-        self.setMinimumSize(1000, 700) # Adjusted minimum size for new layout
+        # self.setMinimumSize(1000, 700) # Adjusted minimum size for new layout
 
         self.arduino_controller = ArduinoController()
 
@@ -43,13 +43,11 @@ class MAINWINDOW(QMainWindow):
 
         }
 
-        self._setup_ui() # Call the new setup method
-        self._load_stylesheet("Styles/main_window_styles.css") # Load QSS for styling
+        self._setup_ui()
+        self._load_stylesheet("Styles/main_window_styles.css")
 
     def _load_stylesheet(self, path: str):
-        """
-        Loads an external CSS stylesheet.
-        """
+
         try:
             with open(path, "r") as file:
                 self.setStyleSheet(file.read())
@@ -59,16 +57,14 @@ class MAINWINDOW(QMainWindow):
             QMessageBox.critical(self, "Erreur", f"Impossible de charger la feuille de style : {e}")
 
     def _setup_ui(self):
-        """
-        Sets up the main UI with a vertical sidebar navigation and a stacked widget for content.
-        """
+
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
         main_layout = QHBoxLayout(central_widget)
         main_layout.setContentsMargins(0, 0, 0, 0) # No margins for the main layout
         main_layout.setSpacing(0) # No spacing between sidebar and content
 
-        # --- Sidebar Navigation ---
+
         self.sidebar_frame = QFrame()
         self.sidebar_frame.setObjectName("sidebarFrame")
         self.sidebar_frame.setFixedWidth(200) # Fixed width for the sidebar
@@ -97,14 +93,14 @@ class MAINWINDOW(QMainWindow):
             button.setObjectName("navButton")
             button.setIcon(self._get_icon_for_page(page_name)) # Set icon
             button.setIconSize(QSize(24, 24))
-            # Use functools.partial to pass the page_instance directly
+
             button.clicked.connect(functools.partial(self.show_page, page_instance))
             sidebar_layout.addWidget(button)
-            self.nav_buttons[page_name] = button # Store reference to button
+            self.nav_buttons[page_name] = button
 
-        sidebar_layout.addStretch() # Push buttons to the top
+        sidebar_layout.addStretch()
 
-        # Logout Button at the bottom of the sidebar
+
         self.logout_button = QPushButton("Déconnexion")
         self.logout_button.setObjectName("logoutButton")
         self.logout_button.setIcon(QIcon("Icons/logout.png"))
@@ -114,23 +110,19 @@ class MAINWINDOW(QMainWindow):
 
         main_layout.addWidget(self.sidebar_frame)
 
-        # --- Content Area (Stacked Widget) ---
         self.stacked_widget = QStackedWidget()
         self.stacked_widget.setObjectName("contentArea")
         main_layout.addWidget(self.stacked_widget)
 
-        # Add all pages to the stacked widget
+
         for page_name, page_instance in self.pages.items():
             self.stacked_widget.addWidget(page_instance)
 
-        # Set the initial page (e.g., "Gestion Admins")
-        self.show_page(self.pages["Gestion Admins"]) # Display the first page by default
+
+        self.show_page(self.pages["Gestion Admins"])
 
     def _get_icon_for_page(self, page_name: str) -> QIcon:
-        """
-        Returns a QIcon based on the page name.
-        You'll need to create these icon files in your 'icons' directory.
-        """
+
         icon_map = {
             "Gestion Admins": "Icons/admin.png",
             "Gestion Chauffeurs": "Icons/driver_icon.png",
@@ -144,10 +136,7 @@ class MAINWINDOW(QMainWindow):
         return QIcon(path)
 
     def show_page(self, page_instance: QWidget):
-        """
-        Displays the specified page in the stacked widget.
-        Highlights the corresponding navigation button.
-        """
+
         self.stacked_widget.setCurrentWidget(page_instance)
 
         # Update button styling to indicate active page
@@ -160,9 +149,7 @@ class MAINWINDOW(QMainWindow):
 
 
     def back_to_login_page(self):
-        """
-        Emits the signal to return to the login page and closes the main window.
-        """
+
         confirmation = QMessageBox.question(
             self, "Confirmation", "Voulez-vous vraiment vous déconnecter ?",
             QMessageBox.Yes | QMessageBox.No
@@ -182,20 +169,19 @@ class MAINWINDOW(QMainWindow):
                 QMessageBox.critical(self, "Erreur de Déconnexion",
                                      f"Une erreur est survenue lors de la déconnexion : {str(e)}")
 
-    # --- NAVIGATION VERS LES PAGES DE MODIFICATION (Pop-up Dialogues) ---
-    # These methods open modification windows as modal dialogues.
+
 
     def open_modify_photo_page(self, id_photo):
-        """Opens the image modification window."""
+
         modifier_photo = MODIFIER_IMAGES_PAGE(id_photo, parent=self)
         modifier_photo.exec()
 
     def open_modify_admin_page(self, admin_id):
-        """Opens the administrator modification window."""
+
         modifier_admin = MODIFIER_ADMIN(admin_id, parent=self)
         modifier_admin.exec()
 
     def open_modify_chauffeur_page(self, chauffeur_id):
-        """Opens the driver modification window."""
+
         modifier_chauffeur = MODIFIER_CHAUFFEUR(chauffeur_id, parent=self)
         modifier_chauffeur.exec()
