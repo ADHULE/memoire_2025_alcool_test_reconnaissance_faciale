@@ -4,3 +4,5 @@ from.chauffeur_model import CHAUFFEUR
 from.historitique_model import HISTORIQUE
 from.personne_model import PERSONNE
 from.image_model import IMAGE
+from .test_alcool_save_model import AlcoolTestModel
+

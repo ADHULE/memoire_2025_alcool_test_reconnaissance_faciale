@@ -37,7 +37,7 @@ class LOGINWINDOW(QMainWindow):
         self.main_frame = QWidget(self)
         self.setCentralWidget(self.main_frame)
         self.main_layout = QVBoxLayout(self.main_frame)
-        self.main_layout.setContentsMargins(20, 20, 20, 20)
+        # self.main_layout.setContentsMargins(20, 20, 20, 20)
 
         general_frame = QFrame()
         general_frame.setObjectName("general_frame")
@@ -48,7 +48,7 @@ class LOGINWINDOW(QMainWindow):
         sections_frame.setObjectName("sections_frame")
         sections_layout = QHBoxLayout(sections_frame)
         sections_layout.setSpacing(30)
-        sections_layout.setContentsMargins(10, 10, 10, 10)
+        # sections_layout.setContentsMargins(10, 10, 10, 10)
 
         # Section utilisateur - image moyenne
         login_section = self._create_section(
@@ -105,7 +105,7 @@ class LOGINWINDOW(QMainWindow):
             painter = QPainter(mask)
             painter.setRenderHint(QPainter.Antialiasing)
             painter.setBrush(Qt.white)
-            painter.drawRoundedRect(0, 0, pixmap.width(), pixmap.height(), 15, 15)
+            painter.drawRoundedRect(0, 0, pixmap.width(), pixmap.height(), 25, 25)
             painter.end()
 
         if title:
@@ -156,7 +156,7 @@ class LOGINWINDOW(QMainWindow):
         self.port_combobox = QComboBox()
         layout.addWidget(self.port_combobox)
 
-        self.status_label = QLabel("🔴 Déconnecté")
+        self.status_label = QLabel("Déconnecté")
         self.status_label.setStyleSheet("font-weight: bold; color: red;")
 
         self.btn_arduino_value = QPushButton("Arduino Value")
@@ -181,7 +181,7 @@ class LOGINWINDOW(QMainWindow):
         line_edit.setPlaceholderText(placeholder_text)
         line_edit.setEchoMode(echo_mode)
         return line_edit
-
+    #     afficher le password ou hide
     def _toggle_password_visibility(self):
         visible = self.show_password_check_box.isChecked()
         self.password_line_edit.setEchoMode(QLineEdit.EchoMode.Normal if visible else QLineEdit.EchoMode.Password)
@@ -198,10 +198,10 @@ class LOGINWINDOW(QMainWindow):
 
     def _status_label_update(self, connected: bool):
         if connected:
-            self.status_label.setText("🟢 Connecté")
+            self.status_label.setText("Connecté")
             self.status_label.setStyleSheet("font-weight: bold; color: green;")
         else:
-            self.status_label.setText("🔴 Déconnecté")
+            self.status_label.setText("Déconnecté")
             self.status_label.setStyleSheet("font-weight: bold; color: red;")
 
     def go_to_arduno_value_page(self):

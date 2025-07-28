@@ -3,7 +3,8 @@ import serial.tools.list_ports
 import json
 from PySide6.QtCore import QObject, QThread, Signal, Slot
 from PySide6.QtWidgets import QMessageBox
-
+from  Controllers.alcool_test_controller import AlcoolTestController
+from datetime import datetime
 class ArduinoController(QObject):
     """
     Contrôleur pour gérer la connexion série avec Arduino et lire les données JSON.
@@ -82,6 +83,22 @@ class ArduinoController(QObject):
             except Exception as e:
                 print(f"[Erreur lecture série] {e}")
 
+    # def extract_alcohol_value(self, raw_line: str):
+    #     try:
+    #         data = json.loads(raw_line)
+    #         if "alcohol" in data:
+    #             raw_value = float(data["alcohol"])
+    #             normalized = round(raw_value / 1023.0, 3)
+    #             self.last_alcohol_value = normalized
+    #             print(f"[INFO] Valeur d'alcool extraite : {self.last_alcohol_value}")
+    #         else:
+    #             print("[WARNING] Clé 'alcohol' absente.")
+    #     except (json.JSONDecodeError, ValueError) as e:
+    #         print(f"[ERROR] Erreur de parsing JSON : {e}")
+
+    def set_database_controller(self, db_controller: AlcoolTestController):
+        self.db_controller = db_controller
+
     def extract_alcohol_value(self, raw_line: str):
         try:
             data = json.loads(raw_line)
@@ -90,6 +107,9 @@ class ArduinoController(QObject):
                 normalized = round(raw_value / 1023.0, 3)
                 self.last_alcohol_value = normalized
                 print(f"[INFO] Valeur d'alcool extraite : {self.last_alcohol_value}")
+
+                if hasattr(self, "db_controller"):
+                    self.db_controller.new_alcool_value(datetime.now(), normalized)
             else:
                 print("[WARNING] Clé 'alcohol' absente.")
         except (json.JSONDecodeError, ValueError) as e:
@@ -101,12 +121,12 @@ class ArduinoController(QObject):
             self.reader_thread.quit()
             self.reader_thread.wait()
 
-    def send_command(self, cmd: str):
-        if self.is_connected():
-            try:
-                self.serial_connection.write((cmd + "\n").encode())
-            except Exception as e:
-                print(f"[Erreur d'envoi] {e}")
+    # def send_command(self, cmd: str):
+    #     if self.is_connected():
+    #         try:
+    #             self.serial_connection.write((cmd + "\n").encode())
+    #         except Exception as e:
+    #             print(f"[Erreur d'envoi] {e}")
 
     def close_connection(self):
         try:

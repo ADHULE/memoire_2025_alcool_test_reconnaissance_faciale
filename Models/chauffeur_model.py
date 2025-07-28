@@ -8,4 +8,6 @@ class CHAUFFEUR(PERSONNE):
     id = Column(Integer, ForeignKey("personnes.id"), primary_key=True)
     numero_permis = Column(String(50), unique=True, nullable=False)
 
+    # Relation avec l'historique
     historiques = relationship("HISTORIQUE", back_populates="chauffeur", cascade="all, delete-orphan")
+

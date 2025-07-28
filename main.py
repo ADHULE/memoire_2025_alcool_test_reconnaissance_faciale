@@ -9,6 +9,7 @@ from Views.Home.main_window import MAINWINDOW
 from Views.Home.face_recognition_camera import FACE_RECOGNITION_CAMERA
 from Views.mq3_alcool.mq3_arduino_value_ui import Mq3ValueGui
 
+
 if __name__ == "__main__":
     try:
         app = QApplication(sys.argv)
@@ -35,6 +36,7 @@ if __name__ == "__main__":
         login = LOGINWINDOW(arduino_controller)
         webcam = FACE_RECOGNITION_CAMERA()
         arduino=Mq3ValueGui(arduino_controller)
+        # date_save=Teste_Save_Mq3_Value(arduino_controller)
 
         # Connexion des signaux
         login.home_page_signal.connect(window.show)
