@@ -11,7 +11,7 @@ class HISTORIQUE(Base):
     jour_heure = Column(DateTime, nullable=False)
     event_type = Column(String(255), nullable=False)
     person_info = Column(String(255), nullable=False)
-    alcool_value = Column(Float, nullable=False)
+    alcool_value = Column(Float, nullable=True)
 
     chauffeur = relationship("CHAUFFEUR", back_populates="historiques")
 

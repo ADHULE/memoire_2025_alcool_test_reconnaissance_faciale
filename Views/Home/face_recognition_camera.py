@@ -1,15 +1,15 @@
+from PySide6.QtCore import Qt, Signal, QSize
+from PySide6.QtGui import QImage, QPixmap, QFont, QIcon
 from PySide6.QtWidgets import (
     QMainWindow, QWidget, QLabel, QVBoxLayout, QHBoxLayout,
     QPushButton, QComboBox, QLineEdit, QMessageBox, QFrame, QSizePolicy
 )
-from PySide6.QtGui import QImage, QPixmap, QFont, QIcon
-from PySide6.QtCore import Qt, Signal, QSize
 
+from Controllers.arduino_controller import ArduinoController
 from Controllers.camera_controller import CameraController
 from Controllers.chauffeur_controller import CHAUFFEUR_CONTROLLER
 from Controllers.image_controller import IMAGE_CONTROLLER
-from Controllers.arduino_controller import ArduinoController
-
+from Controllers.historique_controller import HISTORIQUE_CONTROLLER
 
 class FACE_RECOGNITION_CAMERA(QMainWindow):
     mainwindow_signal = Signal()
@@ -23,7 +23,8 @@ class FACE_RECOGNITION_CAMERA(QMainWindow):
         self.person_controller = CHAUFFEUR_CONTROLLER()
         self.image_controller = IMAGE_CONTROLLER()
         self.arduino_controller = ArduinoController()
-        self.camera_controller = CameraController(self.person_controller, self.image_controller, self.arduino_controller)
+        self.history_controller = HISTORIQUE_CONTROLLER()
+        self.camera_controller = CameraController(self.person_controller, self.image_controller,self.history_controller)
 
         # Connexions aux signaux de logique
         self.camera_controller.frame_ready.connect(self.display_frame)
@@ -213,3 +214,5 @@ class FACE_RECOGNITION_CAMERA(QMainWindow):
 
     def log_recognition(self, name, score):
         print(f"Reconnaissance : {name} avec un score de {score:.4f}")
+
+

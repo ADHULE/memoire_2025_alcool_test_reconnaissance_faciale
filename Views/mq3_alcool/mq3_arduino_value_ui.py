@@ -53,24 +53,25 @@ class Mq3ValueGui(QMainWindow):
             raw_value = float(data["alcohol"])
             normalized = round(raw_value / 1023.0, 3)
             alert = bool(data.get("alert", False))
-            seuil_detection = 600  # 👉 seuil critique à ajuster selon les tests
+            seuil_detection = 600  #  seuil critique à ajuster selon les tests
 
             couleur = "red" if alert else "green"
             msg_html = (
                 f"<span style='color:{couleur};'>"
-                f"Alcool brut : {raw_value} | "
+                # f"Alcool brut : {raw_value} | "
                 f"Alcool normalisé : {normalized} | "
                 f"État numérique : {data.get('digital', 'N/A')} | "
-                f"Alerte : {alert}"
+                # f"Alerte : {alert}"
                 f"</span>"
             )
 
-            # 💾 Si alerte active ET brut > seuil
+            # Si alerte active ET brut > seuil
             if alert and raw_value > seuil_detection:
                 try:
                     self.arduino_controller.db_controller.new_alcool_value(datetime.now(), raw_value)
                     print(f"[INFO] Valeur brute enregistrée avec alerte : {raw_value}")
                 except Exception as e:
+                    # return f"{e}"
                     print(f"[DB ERROR] Échec d'enregistrement (alerte) : {e}")
 
             # 💾 Optionnel : enregistre valeur normalisée si > 0 (hors alerte)

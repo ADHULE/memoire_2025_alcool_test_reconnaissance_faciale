@@ -8,7 +8,7 @@ class HISTORIQUE_CONTROLLER:
 
     # Créer un nouvel historique
     def new_history(self, chauffeur_id: int, jour_heure: datetime, event_type: str,
-                    person_info: str, alcool_value: float, image_id: int = None) -> HISTORIQUE:
+                    person_info: str, alcool_value=None, image_id: int = None) -> HISTORIQUE:
         historique = HISTORIQUE(
             chauffeur_id=chauffeur_id,
             jour_heure=jour_heure,
