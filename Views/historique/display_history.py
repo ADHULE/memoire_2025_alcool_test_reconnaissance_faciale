@@ -1,12 +1,11 @@
 from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLineEdit,
-    QMessageBox, QLabel, QTableWidget, QTableWidgetItem, QHeaderView,
-    QDateEdit, QFormLayout
+    QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLineEdit, QLabel,
+    QMessageBox, QDateEdit, QFormLayout, QScrollArea, QGridLayout, QFrame
 )
 from PySide6.QtCore import QDate, Qt
 from PySide6.QtGui import QPixmap
 from Controllers.historique_controller import HISTORIQUE_CONTROLLER
-from Controllers.image_controller import IMAGE_CONTROLLER  # 👈 Import ajouté
+from Controllers.image_controller import IMAGE_CONTROLLER
 import logging
 from datetime import datetime
 import os
@@ -18,7 +17,7 @@ class DISPLAY_HISTORY(QWidget):
         self.setWindowTitle("Historique des événements")
 
         self.history_controller = HISTORIQUE_CONTROLLER()
-        self.image_controller = IMAGE_CONTROLLER()  # 👈 Instancier le contrôleur image
+        self.image_controller = IMAGE_CONTROLLER()
         self.all_history = []
 
         logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -29,9 +28,8 @@ class DISPLAY_HISTORY(QWidget):
     def setup_ui(self):
         main_layout = QVBoxLayout()
 
-        # Barre de recherche et bouton actualiser
+        # Barre de recherche
         toolbar_layout = QHBoxLayout()
-
         self.search_edit = QLineEdit()
         self.search_edit.setPlaceholderText("Rechercher par type d'événement (person_info)")
         self.search_edit.textChanged.connect(self.filter_history)
@@ -53,20 +51,18 @@ class DISPLAY_HISTORY(QWidget):
         self.end_date_edit.setCalendarPopup(True)
         self.end_date_edit.setDate(QDate.currentDate())
 
-        self.date_filter_button = QPushButton("Filtrer par date")
-        self.date_filter_button.clicked.connect(self.filter_by_date)
-        date_filter_layout.addRow("Du :", self.start_date_edit)
-        date_filter_layout.addRow("Au :", self.end_date_edit)
-        date_filter_layout.addWidget(self.date_filter_button)
-        main_layout.addLayout(date_filter_layout)
 
-        # Table
-        self.table = QTableWidget()
-        self.table.setColumnCount(5)
-        self.table.setHorizontalHeaderLabels(["Date/Heure", "Événement", "Taux Alcool", "Image", "Action"])
-        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
-        self.table.setSelectionBehavior(QTableWidget.SelectRows)
-        main_layout.addWidget(self.table)
+
+        # Scroll Area pour afficher les blocs
+        self.scroll_area = QScrollArea()
+        self.scroll_area.setWidgetResizable(True)
+
+        self.scroll_widget = QWidget()
+        self.grid_layout = QGridLayout(self.scroll_widget)
+        self.grid_layout.setAlignment(Qt.AlignTop)
+
+        self.scroll_area.setWidget(self.scroll_widget)
+        main_layout.addWidget(self.scroll_area)
 
         self.setLayout(main_layout)
         self.load_history_from_controller()
@@ -80,37 +76,43 @@ class DISPLAY_HISTORY(QWidget):
             self.show_message("Erreur", "Impossible de charger l'historique.")
 
     def display_history(self, histories):
-        self.table.setRowCount(0)
-        for row, h in enumerate(histories):
-            self.table.insertRow(row)
+        # Vider l'affichage précédent
+        for i in reversed(range(self.grid_layout.count())):
+            widget = self.grid_layout.itemAt(i).widget()
+            if widget:
+                widget.setParent(None)
 
-            # Colonne 0 : Date/heure
-            self.table.setItem(row, 0, QTableWidgetItem(str(h.jour_heure)))
+        for index, h in enumerate(histories):
+            container = QFrame()
+            container.setFrameShape(QFrame.StyledPanel)
+            layout = QHBoxLayout(container)
 
-            # Colonne 1 : Person Info
-            self.table.setItem(row, 1, QTableWidgetItem(h.person_info))
-
-            # Colonne 2 : Taux d'alcool
-            alcool_display = f"{h.alcool_value:.2f}" if h.alcool_value is not None else "-"
-            self.table.setItem(row, 2, QTableWidgetItem(alcool_display))
-
-            # Colonne 3 : Image (affichée via image_id)
+            # Image
             image_label = QLabel()
-            image_path = self.image_controller.get_image_path_by_id(h.image_id)  # 👈 Utiliser image_id
-
+            image_path = self.image_controller.get_image_path_by_id(h.image_id)
             if image_path and os.path.exists(image_path):
-                pixmap = QPixmap(image_path).scaled(80, 80, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+                pixmap = QPixmap(image_path).scaled(150, 100, Qt.KeepAspectRatio, Qt.SmoothTransformation)
                 image_label.setPixmap(pixmap)
             else:
-                image_label.setText("Image non trouvée")
-
+                image_label.setText("Image\nnon trouvée")
+            image_label.setFixedSize(200, 100)
             image_label.setAlignment(Qt.AlignCenter)
-            self.table.setCellWidget(row, 3, image_label)
 
-            # Colonne 4 : Bouton supprimer
-            delete_button = QPushButton("Supprimer")
-            delete_button.clicked.connect(lambda _, hid=h.id: self.delete_history(hid))
-            self.table.setCellWidget(row, 4, delete_button)
+            # Infos texte
+            info_layout = QVBoxLayout()
+            info_layout.addWidget(QLabel(f"<b>Date/Heure : </b> {h.jour_heure}"))
+            info_layout.addWidget(QLabel(f"<b>Informations :</b>  {h.person_info}"))
+            taux = f"{h.alcool_value:.2f}" if h.alcool_value is not None else "-"
+            info_layout.addWidget(QLabel(f"<b>Taux d'alcool :</b>  {taux}"))
+            # Bouton de suppression
+            delete_btn = QPushButton("Supprimer")
+            delete_btn.clicked.connect(lambda _, hid=h.id: self.delete_history(hid))
+            info_layout.addWidget(delete_btn)
+
+            layout.addWidget(image_label)
+            layout.addLayout(info_layout)
+
+            self.grid_layout.addWidget(container, index, 0)
 
     def delete_history(self, historique_id):
         confirmation = QMessageBox.question(
