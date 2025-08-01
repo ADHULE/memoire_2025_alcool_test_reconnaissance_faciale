@@ -6,6 +6,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import QDate, Qt
 from PySide6.QtGui import QPixmap
 from Controllers.historique_controller import HISTORIQUE_CONTROLLER
+from Controllers.image_controller import IMAGE_CONTROLLER  # 👈 Import ajouté
 import logging
 from datetime import datetime
 import os
@@ -15,9 +16,9 @@ class DISPLAY_HISTORY(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Historique des événements")
-        self.resize(1100, 600)
 
         self.history_controller = HISTORIQUE_CONTROLLER()
+        self.image_controller = IMAGE_CONTROLLER()  # 👈 Instancier le contrôleur image
         self.all_history = []
 
         logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -54,7 +55,10 @@ class DISPLAY_HISTORY(QWidget):
 
         self.date_filter_button = QPushButton("Filtrer par date")
         self.date_filter_button.clicked.connect(self.filter_by_date)
-
+        date_filter_layout.addRow("Du :", self.start_date_edit)
+        date_filter_layout.addRow("Au :", self.end_date_edit)
+        date_filter_layout.addWidget(self.date_filter_button)
+        main_layout.addLayout(date_filter_layout)
 
         # Table
         self.table = QTableWidget()
@@ -90,9 +94,9 @@ class DISPLAY_HISTORY(QWidget):
             alcool_display = f"{h.alcool_value:.2f}" if h.alcool_value is not None else "-"
             self.table.setItem(row, 2, QTableWidgetItem(alcool_display))
 
-            # Colonne 3 : Image
+            # Colonne 3 : Image (affichée via image_id)
             image_label = QLabel()
-            image_path = self.get_image_path(h.image_id)
+            image_path = self.image_controller.get_image_path_by_id(h.image_id)  # 👈 Utiliser image_id
 
             if image_path and os.path.exists(image_path):
                 pixmap = QPixmap(image_path).scaled(80, 80, Qt.KeepAspectRatio, Qt.SmoothTransformation)
@@ -107,10 +111,6 @@ class DISPLAY_HISTORY(QWidget):
             delete_button = QPushButton("Supprimer")
             delete_button.clicked.connect(lambda _, hid=h.id: self.delete_history(hid))
             self.table.setCellWidget(row, 4, delete_button)
-
-    def get_image_path(self, image_id):
-        # Exemple : images/image_<id>.jpg
-        return f"images/image_{image_id}.jpg" if image_id else ""
 
     def delete_history(self, historique_id):
         confirmation = QMessageBox.question(

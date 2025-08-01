@@ -2,6 +2,7 @@ from datetime import datetime
 
 from Models.database_model import my_session
 from Models.historitique_model import HISTORIQUE
+from Models.chauffeur_model import CHAUFFEUR
 
 
 class HISTORIQUE_CONTROLLER:
@@ -51,3 +52,11 @@ class HISTORIQUE_CONTROLLER:
     # Filtrer par taux d’alcool
     def get_by_alcool_level(self, min_value: float = 0.5):
         return self.db.query(HISTORIQUE).filter(HISTORIQUE.alcool_value >= min_value).all()
+
+    # Récupérer le chemin de l'image du chauffeur à partir de son identifiant
+    def get_chauffeur_image_path(self, chauffeur_id: int) -> str:
+        chauffeur = self.db.query(CHAUFFEUR).filter(CHAUFFEUR.id == chauffeur_id).first()
+        if chauffeur and hasattr(chauffeur, "photo_path"):
+            return chauffeur.photo_path
+        return ""
+
