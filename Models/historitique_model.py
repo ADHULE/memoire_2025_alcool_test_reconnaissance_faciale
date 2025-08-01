@@ -8,11 +8,10 @@ class HISTORIQUE(Base):
     id = Column(Integer, primary_key=True, index=True)
     chauffeur_id = Column(Integer, ForeignKey('chauffeurs.id'), nullable=False)
     image_id = Column(Integer, ForeignKey('images.id'), nullable=True)
+    chauffeur = relationship("CHAUFFEUR", back_populates="historiques")
+    image = relationship("IMAGE", back_populates="historique")
+
     jour_heure = Column(DateTime, nullable=False)
-    event_type = Column(String(255), nullable=False)
     person_info = Column(String(255), nullable=False)
     alcool_value = Column(Float, nullable=True)
 
-    chauffeur = relationship("CHAUFFEUR", back_populates="historiques")
-
-    image = relationship("IMAGE", back_populates="historique")  # ⬅ Relation bidirectionnelle

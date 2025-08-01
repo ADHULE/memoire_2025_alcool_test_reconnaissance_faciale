@@ -1,10 +1,11 @@
 import os
+from datetime import datetime
+
 import cv2
 import numpy as np
-import json
 from PySide6.QtCore import QObject, Signal, QTimer
 from insightface.app import FaceAnalysis
-from datetime import datetime
+
 
 class CameraController(QObject):
     frame_ready = Signal(object)
@@ -25,8 +26,8 @@ class CameraController(QObject):
 
         self.person_controller = person_controller
         self.image_controller = image_controller
-        self.arduino_controller = arduino_controller
         self.history_controller = history_controller
+        self.arduino_controller = arduino_controller
 
     def detect_local_cameras(self):
         available = []
@@ -41,13 +42,15 @@ class CameraController(QObject):
         self.face_db.clear()
         try:
             images = self.image_controller.get_all_photos()
-            images = images if isinstance(images, (list, tuple)) else [images] if images else []
+            if not isinstance(images, (list, tuple)):
+                images = [images] if images else []
 
             for image_obj in images:
                 path = image_obj.url
                 if not os.path.exists(path):
                     print(f"[AVERTISSEMENT] Image absente : {path}")
                     continue
+
                 img = cv2.imread(path)
                 if img is None:
                     print(f"[AVERTISSEMENT] Impossible de lire : {path}")
@@ -55,12 +58,14 @@ class CameraController(QObject):
 
                 person = self.person_controller.get_driver_by_id(image_obj.personne_id)
                 faces = self.face_engine.get(img)
+
                 if person and faces:
                     self.face_db.append({
                         "id": person.id,
                         "nom": f"{person.nom} {person.prenom}",
                         "telephone": person.telephone,
-                        "embedding": faces[0].embedding
+                        "embedding": faces[0].embedding,
+                        "image_id": image_obj.id,
                     })
         except Exception as e:
             self.error_occurred.emit(f"Erreur chargement visages : {e}")
@@ -84,11 +89,6 @@ class CameraController(QObject):
             self.cap.release()
             self.cap = None
 
-    def determiner_event_type(self, taux: float = None, seuil=0.5):
-        if taux is None:
-            return "reconnaissance simple (taux inconnu)"
-        return "reconnaissance + alerte alcool" if taux >= seuil else "reconnaissance simple"
-
     def process_frame(self):
         if not self.cap or not self.cap.isOpened():
             return
@@ -102,7 +102,7 @@ class CameraController(QObject):
 
         for face in faces:
             bbox = face.bbox.astype(int)
-            name, best_score, matched_id, matched_profile = "Inconnu", 0.0, None, None
+            name, best_score, matched_profile = "Inconnu", 0.0, None
             color = (0, 0, 255)
 
             for profile in self.face_db:
@@ -110,7 +110,6 @@ class CameraController(QObject):
                     np.linalg.norm(face.embedding) * np.linalg.norm(profile["embedding"]) + 1e-6)
                 if sim > self.recognition_threshold and sim > best_score:
                     name = profile["nom"]
-                    matched_id = profile["id"]
                     matched_profile = profile
                     best_score = sim
                     color = (0, 255, 0)
@@ -123,11 +122,9 @@ class CameraController(QObject):
                 self._log_recognition(name, best_score)
                 self.recognized.emit(name, best_score)
 
-                event_type = self.determiner_event_type()
                 self._save_recognition_information(
                     date=datetime.now(),
-                    event_type=event_type,
-                    person_info=matched_profile
+                    person_info=matched_profile,
                 )
 
         self.frame_ready.emit(frame)
@@ -135,25 +132,27 @@ class CameraController(QObject):
     def _log_recognition(self, name: str, score: float):
         print(f"[INFO] Reconnu : {name} (Score: {score:.4f})")
 
-    def _save_recognition_information(self, date, event_type, person_info, alcool_value=None):
+    def _save_recognition_information(self, date, person_info, alcool_value=None):
         try:
             chauffeur_id = person_info.get("id")
-            image_id = None  # Peut être déterminé si besoin
-            jour_heure = date
-            event_type_str = str(event_type)
-            person_info_serialized = json.dumps({
-                "nom": person_info.get("nom"),
-                "telephone": person_info.get("telephone")
-            })
+            image_id = person_info.get("image_id")  # lien direct avec l’image préchargée
+            nom = person_info.get("nom")
+            telephone = person_info.get("telephone")
 
+            if chauffeur_id is None:
+                raise ValueError("Identifiant du chauffeur introuvable")
+
+            values_string = f"{nom},{telephone}"
+
+            print(f"[INFO] Historique enregistré pour {nom} à {date}")
             self.history_controller.new_history(
                 chauffeur_id=chauffeur_id,
                 image_id=image_id,
-                jour_heure=jour_heure,
-                event_type=event_type_str,
-                person_info=person_info_serialized,
-                alcool_value=alcool_value
+                jour_heure=date,
+                person_info=values_string,
+                alcool_value=alcool_value,
             )
-            print(f"[INFO] Historique enregistré pour {person_info.get('nom')} à {jour_heure}")
         except Exception as e:
             print(f"[ERREUR] Sauvegarde échouée : {e}")
+            if hasattr(self.history_controller, "rollback_session"):
+                self.history_controller.rollback_session()
