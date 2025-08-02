@@ -10,21 +10,20 @@ class IMAGE_VIEW(QWidget):
         self.setWindowTitle("Gestion des Photos")
         self.photo_controller, self.chauffeur_controller = IMAGE_CONTROLLER(), CHAUFFEUR_CONTROLLER()
         self.selected_chauffeur_id = None
-        self.camera_view = None # Instance de la vue caméra
+        self.camera_view = None
 
-        # Layout principal
         main_layout = QVBoxLayout(self)
 
-        # Sélection du Chauffeur (avant l'ajout)
         self.chauffeur_group = QGroupBox("Sélectionner un chauffeur pour la photo")
-
         self.chauffeur_layout = QVBoxLayout()
         self.seach_layout = QHBoxLayout()
 
         self.filter_chauffeur_input = self._create_line_edit("Rechercher...", self.filter_chauffeurs)
         self.seach_layout.addWidget(self.filter_chauffeur_input)
-        actualiser_buton=self._create_button("Actualiser la liste",self.filter_chauffeurs)
+
+        actualiser_buton = self._create_button("Actualiser la liste", self.refresh_chauffeur_list)
         self.seach_layout.addWidget(actualiser_buton)
+
         self.chauffeur_list_layout, self.chauffeur_scroll_area = self._create_scrollable_area()
         self.chauffeur_layout.addLayout(self.seach_layout)
         self.chauffeur_layout.addWidget(self.chauffeur_scroll_area)
@@ -34,45 +33,38 @@ class IMAGE_VIEW(QWidget):
         self.chauffeur_group.setLayout(self.chauffeur_layout)
         main_layout.addWidget(self.chauffeur_group)
 
-        # Bouton pour ouvrir la caméra
-
-
-        # Formulaire Ajout d'Images (pour parcourir les fichiers)
         self.form_group = QGroupBox("Ajouter une image depuis un fichier")
         self.form_layout = QGridLayout()
+        self.add_image_layout = QHBoxLayout()
 
-        self.add_image_layout=QHBoxLayout()
         self.url_input = self._create_line_edit("Sélectionner une image...")
         self.select_image_button = self._create_button("Parcourir...", self.browse_image)
         self.add_existing_button = self._create_button("Ajouter l'image sélectionnée", self.add_existing_photo)
-        self.add_existing_button.setEnabled(False) # Désactivé au début
+        self.add_existing_button.setEnabled(False)
 
         self.form_layout.addWidget(QLabel("URL:"), 0, 0)
         self.form_layout.addWidget(self.url_input, 0, 1)
-
         self.add_image_layout.addWidget(self.select_image_button)
         self.add_image_layout.addWidget(self.add_existing_button)
         main_layout.addLayout(self.add_image_layout)
+
         self.form_group.setLayout(self.form_layout)
         main_layout.addWidget(self.form_group)
 
     def _create_line_edit(self, placeholder=None, callback=None):
-
         line_edit = QLineEdit()
         if placeholder:
             line_edit.setPlaceholderText(placeholder)
         if callback:
-            line_edit.textChanged.connect(callback)
+            line_edit.textChanged.connect(lambda text: callback(text))
         return line_edit
 
     def _create_button(self, text, callback):
-
         button = QPushButton(text)
         button.clicked.connect(callback)
         return button
 
     def _create_scrollable_area(self):
-
         list_widget = QWidget()
         list_layout = QVBoxLayout()
         list_widget.setLayout(list_layout)
@@ -82,6 +74,10 @@ class IMAGE_VIEW(QWidget):
         scroll_area.setWidget(list_widget)
 
         return list_layout, scroll_area
+
+    def refresh_chauffeur_list(self):
+        self.filter_chauffeur_input.setText("")  # ✅ Efface le filtre
+        self.populate_chauffeur_list()           # ✅ Recharge tous les chauffeurs
 
     def populate_chauffeur_list(self, chauffeurs=None):
         if chauffeurs is None:
@@ -99,14 +95,13 @@ class IMAGE_VIEW(QWidget):
             self.chauffeur_list_layout.addWidget(radio_button)
             self.chauffeur_radio_buttons[chauffeur.id] = radio_button
 
-        # Sélectionner le premier chauffeur par défaut s'il y en a
         if self.chauffeur_radio_buttons:
             first_id = list(self.chauffeur_radio_buttons.keys())[0]
             self.chauffeur_radio_buttons[first_id].setChecked(True)
             self.selected_chauffeur_id = first_id
-            if hasattr(self, 'open_camera_button'): # Vérifiez si l'attribut existe
+            if hasattr(self, 'open_camera_button'):
                 self.open_camera_button.setEnabled(True)
-            if hasattr(self, 'select_image_button'): # Vérifiez si l'attribut existe
+            if hasattr(self, 'select_image_button'):
                 self.select_image_button.setEnabled(True)
         else:
             self.selected_chauffeur_id = None
@@ -117,7 +112,6 @@ class IMAGE_VIEW(QWidget):
                 self.select_image_button.setEnabled(False)
 
     def chauffeur_selected(self, chauffeur_id, checked):
-
         if checked:
             self.selected_chauffeur_id = chauffeur_id
             if hasattr(self, 'open_camera_button'):
@@ -130,8 +124,6 @@ class IMAGE_VIEW(QWidget):
         filtered_chauffeurs = [c for c in chauffeurs if filter_text.lower() in f"{c.nom} {c.prenom}".lower()]
         self.populate_chauffeur_list(filtered_chauffeurs)
 
-
-
     def handle_captured_image_path(self, file_path):
         if file_path:
             self.add_photo_to_database(file_path)
@@ -140,7 +132,7 @@ class IMAGE_VIEW(QWidget):
         file_path, _ = QFileDialog.getOpenFileName(self, "Sélectionner une image", "", "Images (*.png *.jpg *.jpeg *.bmp *.gif)")
         if file_path:
             self.url_input.setText(file_path)
-            self.add_existing_button.setEnabled(True) # Activer le bouton d'ajout
+            self.add_existing_button.setEnabled(True)
 
     def add_existing_photo(self):
         file_path = self.url_input.text()

@@ -4,7 +4,7 @@ from Models.database_model import my_session
 
 class CHAUFFEUR_CONTROLLER:
     def new_driver(self, nom, postnom, prenom, telephone, email, numero_permis,sex):
-        """🔹 Créer un chauffeur."""
+
         try:
             new_chauffeur = CHAUFFEUR(
                 nom=nom,
