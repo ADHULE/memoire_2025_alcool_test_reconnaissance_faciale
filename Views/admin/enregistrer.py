@@ -13,7 +13,6 @@ class ENREGISTREMENT_ADMIN(QWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("Gestion des Administrateurs")
         self.parent = parent
         self.admin_controller = ADMINISTRATEUR_CONTROLLER()
 
@@ -33,14 +32,13 @@ class ENREGISTREMENT_ADMIN(QWidget):
         self.list_view = QListWidget()
         self.search_input = QLineEdit()
         self.search_input.setPlaceholderText("Rechercher par nom...")
-        self.refresh_button = QPushButton("Rafraîchir")
+        self.refresh_button = QPushButton("Actualiser la liste")
 
         self._build_ui()
         self._load_administrateurs()
 
     def _build_ui(self):
         layout = QVBoxLayout(self)
-        layout.addWidget(QLabel("Gestion des Administrateurs", alignment=Qt.AlignCenter))
 
         form_layout = QGridLayout()
         for i, (label, widget) in enumerate(self.fields_creation.items()):
@@ -54,10 +52,13 @@ class ENREGISTREMENT_ADMIN(QWidget):
         layout.addWidget(self.enregistrer_button)
         self.enregistrer_button.clicked.connect(self._enregistrer_administrateur)
 
-        layout.addWidget(self.search_input)
+        self.seach_layout=QHBoxLayout()
+        self.seach_layout.addWidget(self.search_input)
+
+        layout.addLayout(self.seach_layout)
         self.search_input.textChanged.connect(self._filter_administrateur)
         layout.addWidget(self.list_view)
-        layout.addWidget(self.refresh_button)
+        self.seach_layout.addWidget(self.refresh_button)
         self.refresh_button.clicked.connect(self._load_administrateurs)
 
     def _toggle_password_visibility(self):

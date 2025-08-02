@@ -19,12 +19,14 @@ class IMAGE_VIEW(QWidget):
         self.chauffeur_group = QGroupBox("Sélectionner un chauffeur pour la photo")
 
         self.chauffeur_layout = QVBoxLayout()
+        self.seach_layout = QHBoxLayout()
 
-        self.filter_chauffeur_input = self._create_line_edit("Filtrer par nom", self.filter_chauffeurs)
-        self.chauffeur_layout.addWidget(self.filter_chauffeur_input)
-        actualiser_buton=self._create_button("actualiser",self.filter_chauffeurs)
-        self.chauffeur_layout.addWidget(actualiser_buton)
+        self.filter_chauffeur_input = self._create_line_edit("Rechercher...", self.filter_chauffeurs)
+        self.seach_layout.addWidget(self.filter_chauffeur_input)
+        actualiser_buton=self._create_button("Actualiser la liste",self.filter_chauffeurs)
+        self.seach_layout.addWidget(actualiser_buton)
         self.chauffeur_list_layout, self.chauffeur_scroll_area = self._create_scrollable_area()
+        self.chauffeur_layout.addLayout(self.seach_layout)
         self.chauffeur_layout.addWidget(self.chauffeur_scroll_area)
 
         self.chauffeur_radio_buttons = {}
@@ -39,6 +41,7 @@ class IMAGE_VIEW(QWidget):
         self.form_group = QGroupBox("Ajouter une image depuis un fichier")
         self.form_layout = QGridLayout()
 
+        self.add_image_layout=QHBoxLayout()
         self.url_input = self._create_line_edit("Sélectionner une image...")
         self.select_image_button = self._create_button("Parcourir...", self.browse_image)
         self.add_existing_button = self._create_button("Ajouter l'image sélectionnée", self.add_existing_photo)
@@ -46,14 +49,15 @@ class IMAGE_VIEW(QWidget):
 
         self.form_layout.addWidget(QLabel("URL:"), 0, 0)
         self.form_layout.addWidget(self.url_input, 0, 1)
-        self.form_layout.addWidget(self.select_image_button, 1, 0, 1, 2)
-        self.form_layout.addWidget(self.add_existing_button, 2, 0, 1, 2)
 
+        self.add_image_layout.addWidget(self.select_image_button)
+        self.add_image_layout.addWidget(self.add_existing_button)
+        main_layout.addLayout(self.add_image_layout)
         self.form_group.setLayout(self.form_layout)
         main_layout.addWidget(self.form_group)
 
     def _create_line_edit(self, placeholder=None, callback=None):
-        """Crée un champ de texte avec un placeholder et un callback facultatif."""
+
         line_edit = QLineEdit()
         if placeholder:
             line_edit.setPlaceholderText(placeholder)
@@ -62,13 +66,13 @@ class IMAGE_VIEW(QWidget):
         return line_edit
 
     def _create_button(self, text, callback):
-        """Crée un bouton lié à une action."""
+
         button = QPushButton(text)
         button.clicked.connect(callback)
         return button
 
     def _create_scrollable_area(self):
-        """Crée une zone de liste scrollable."""
+
         list_widget = QWidget()
         list_layout = QVBoxLayout()
         list_widget.setLayout(list_layout)
@@ -80,7 +84,6 @@ class IMAGE_VIEW(QWidget):
         return list_layout, scroll_area
 
     def populate_chauffeur_list(self, chauffeurs=None):
-        """Ajoute les chauffeurs à la liste radio et permet la sélection."""
         if chauffeurs is None:
             chauffeurs = self.chauffeur_controller.get_all_drivers()
 
@@ -114,7 +117,7 @@ class IMAGE_VIEW(QWidget):
                 self.select_image_button.setEnabled(False)
 
     def chauffeur_selected(self, chauffeur_id, checked):
-        """Mémorise l'ID du chauffeur sélectionné."""
+
         if checked:
             self.selected_chauffeur_id = chauffeur_id
             if hasattr(self, 'open_camera_button'):
@@ -123,7 +126,6 @@ class IMAGE_VIEW(QWidget):
                 self.select_image_button.setEnabled(True)
 
     def filter_chauffeurs(self, filter_text):
-        """Filtre les chauffeurs selon le texte entré."""
         chauffeurs = self.chauffeur_controller.get_all_drivers()
         filtered_chauffeurs = [c for c in chauffeurs if filter_text.lower() in f"{c.nom} {c.prenom}".lower()]
         self.populate_chauffeur_list(filtered_chauffeurs)
@@ -131,19 +133,16 @@ class IMAGE_VIEW(QWidget):
 
 
     def handle_captured_image_path(self, file_path):
-        """Récupère le chemin de l'image capturée depuis la CameraView."""
         if file_path:
             self.add_photo_to_database(file_path)
 
     def browse_image(self):
-        """Ouvre une boîte de dialogue pour sélectionner une image existante."""
         file_path, _ = QFileDialog.getOpenFileName(self, "Sélectionner une image", "", "Images (*.png *.jpg *.jpeg *.bmp *.gif)")
         if file_path:
             self.url_input.setText(file_path)
             self.add_existing_button.setEnabled(True) # Activer le bouton d'ajout
 
     def add_existing_photo(self):
-        """Ajoute une image existante associée au chauffeur sélectionné."""
         file_path = self.url_input.text()
         if file_path and self.selected_chauffeur_id:
             self.add_photo_to_database(file_path)
@@ -151,7 +150,6 @@ class IMAGE_VIEW(QWidget):
             QMessageBox.warning(self, "Avertissement", "Veuillez sélectionner un chauffeur et une image.")
 
     def add_photo_to_database(self, file_path):
-        """Ajoute l'URL de la photo à la base de données pour le chauffeur sélectionné."""
         try:
             photo = self.photo_controller.add_photo(file_path, self.selected_chauffeur_id)
             msg = "Photo ajoutée avec succès." if photo else "Échec de l'ajout de la photo."

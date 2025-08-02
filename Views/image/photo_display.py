@@ -10,7 +10,7 @@ from Controllers.image_controller import IMAGE_CONTROLLER
 class DISPLAY_IMAGES(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("AFFICHER LES PHOTOS")
+        # self.setWindowTitle("AFFICHER LES PHOTOS")
         self.parent = parent
 
         self.photo_controller = IMAGE_CONTROLLER()
@@ -30,11 +30,11 @@ class DISPLAY_IMAGES(QWidget):
         # Barre d'outils
         toolbar_layout = QHBoxLayout()
         self.search_edit = QLineEdit()
-        self.search_edit.setPlaceholderText("Rechercher par nom")
+        self.search_edit.setPlaceholderText("Rechercher...")
         self.search_edit.textChanged.connect(self.filter_images)
         toolbar_layout.addWidget(self.search_edit)
 
-        self.refresh_button = QPushButton("Actualiser")
+        self.refresh_button = QPushButton("Actualiser la liste")
         self.refresh_button.clicked.connect(self.load_images_from_controller)
         toolbar_layout.addWidget(self.refresh_button)
 

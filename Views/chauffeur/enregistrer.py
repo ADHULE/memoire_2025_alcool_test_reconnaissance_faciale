@@ -1,5 +1,5 @@
 from PySide6.QtWidgets import *
-from PySide6.QtCore import *
+# from PySide6.QtCore import *
 from Controllers.chauffeur_controller import CHAUFFEUR_CONTROLLER
 from functools import partial
 
@@ -7,31 +7,31 @@ from functools import partial
 class ENREGISTREMENT_CHAUFFEUR(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("Gestion des Chauffeurs")
+        # self.setWindowTitle("Gestion des Chauffeurs")
         self.parent = parent
         self.chauffeur_controller = CHAUFFEUR_CONTROLLER()
 
         self.main_layout = QVBoxLayout(self)
 
         # Formulaire d'enregistrement
-        self.form_group = QGroupBox("Informations du Chauffeur")
+        self.form_group = QGroupBox("Ajouter les nouvelles informations")
         self.form_layout = QGridLayout()
 
         self.fields = {
-            "nom": QLineEdit(),
-            "postnom": QLineEdit(),
-            "prenom": QLineEdit(),
-            "telephone": QLineEdit(),
-            "email": QLineEdit(),
-            "numero_permis": QLineEdit(),
+            "Nom": QLineEdit(),
+            "Post-Nom": QLineEdit(),
+            "Prenom": QLineEdit(),
+            "Téléphone": QLineEdit(),
+            "Email": QLineEdit(),
+            "Numéro de permis": QLineEdit(),
         }
 
-        self.fields["nom"].setPlaceholderText("Entrez votre nom")
-        self.fields["postnom"].setPlaceholderText("Entrez votre post-nom")
-        self.fields["prenom"].setPlaceholderText("Entrez votre prénom")
-        self.fields["telephone"].setPlaceholderText("Entrez votre numéro de téléphone")
-        self.fields["email"].setPlaceholderText("exemple@email.com")
-        self.fields["numero_permis"].setPlaceholderText("Numéro de permis")
+        self.fields["Nom"].setPlaceholderText("Entrez le nom")
+        self.fields["Post-Nom"].setPlaceholderText("Entrez le post-nom")
+        self.fields["Prenom"].setPlaceholderText("Entrez le prénom")
+        self.fields["Téléphone"].setPlaceholderText("Entrez  numéro de téléphone")
+        self.fields["Email"].setPlaceholderText("exemple@email.com")
+        self.fields["Numéro de permis"].setPlaceholderText("Numéro de permis")
 
         for i, (label, field) in enumerate(self.fields.items()):
             self.form_layout.addWidget(QLabel(f"{label.capitalize()}:"), i, 0)
@@ -63,9 +63,12 @@ class ENREGISTREMENT_CHAUFFEUR(QWidget):
         self.list_group = QGroupBox("Liste des Chauffeurs")
         self.list_layout = QVBoxLayout()
         self.search_input = QLineEdit()
+
+        self.search_layout = QHBoxLayout()
         self.search_input.setPlaceholderText("Rechercher...")
         self.search_input.textChanged.connect(self._filter_chauffeur)
-        self.list_layout.addWidget(self.search_input)
+        self.search_layout.addWidget(self.search_input)
+        self.list_layout.addLayout(self.search_layout)
 
         self.list_view = QListWidget()
         self.list_layout.addWidget(self.list_view)
@@ -73,8 +76,9 @@ class ENREGISTREMENT_CHAUFFEUR(QWidget):
         self.list_group.setLayout(self.list_layout)
         self.main_layout.addWidget(self.list_group)
 
-        self.refresh_button = QPushButton("Rafraîchir", clicked=self._load_chauffeurs)
-        self.main_layout.addWidget(self.refresh_button)
+        self.refresh_button = QPushButton("Actualiser la liste", clicked=self._load_chauffeurs)
+
+        self.search_layout.addWidget(self.refresh_button)
 
         self._load_chauffeurs()
 
@@ -90,7 +94,7 @@ class ENREGISTREMENT_CHAUFFEUR(QWidget):
         else:
             data["sex"] = "Neutre"
 
-        if not all(data[key] for key in ["nom", "postnom", "prenom", "telephone", "numero_permis"]) or not data["telephone"].isdigit():
+        if not all(data[key] for key in ["Nom", "Post-Nom", "Prenom", "Téléphone", "Numéro de permis"]) or not data["Téléphone"].isdigit():
             self._show_message("Erreur", "Les champs obligatoires doivent être remplis et le téléphone doit être numérique.")
             return
 

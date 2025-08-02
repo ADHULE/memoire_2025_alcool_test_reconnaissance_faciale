@@ -29,19 +29,19 @@ class MAINWINDOW(QMainWindow):
     def __init__(self):
         super().__init__()
 
-        self.setWindowTitle("GESTION DE DÉTECTEUR D'ALCOOL ET RECONNAISSANCE FACIALE")
+        self.setWindowTitle("GESTION DES INFORMATIONS")
         # self.setMinimumSize(1000, 700) # Adjusted minimum size for new layout
 
         self.arduino_controller = ArduinoController()
 
         # Initialize pages dictionary with instances
         self.pages = {
-            "Gestion Admins": ENREGISTREMENT_ADMIN(parent=self),
-            "Gestion Chauffeurs": ENREGISTREMENT_CHAUFFEUR(parent=self),
-            "Ajouter Images": IMAGE_VIEW(parent=self),
-            "Afficher Images": DISPLAY_IMAGES(parent=self),
-            "Historique": DISPLAY_HISTORY(parent=self),
-            "Alcool_Manager":AlcoolDataManager()
+            "Gestion des administrateurs": ENREGISTREMENT_ADMIN(parent=self),
+            "Gestion des chauffeurs": ENREGISTREMENT_CHAUFFEUR(parent=self),
+            "Ajouter les images": IMAGE_VIEW(parent=self),
+            "Afficher les images": DISPLAY_IMAGES(parent=self),
+            "Voir les historiques": DISPLAY_HISTORY(parent=self),
+            # "Alcool_Manager":AlcoolDataManager()
         }
 
         self._setup_ui()
@@ -68,7 +68,7 @@ class MAINWINDOW(QMainWindow):
 
         self.sidebar_frame = QFrame()
         self.sidebar_frame.setObjectName("sidebarFrame")
-        self.sidebar_frame.setFixedWidth(200) # Fixed width for the sidebar
+        self.sidebar_frame.setFixedWidth(300) # Fixed width for the sidebar
         sidebar_layout = QVBoxLayout(self.sidebar_frame)
         sidebar_layout.setContentsMargins(10, 10, 10, 10)
         sidebar_layout.setSpacing(10)
@@ -120,16 +120,16 @@ class MAINWINDOW(QMainWindow):
             self.stacked_widget.addWidget(page_instance)
 
 
-        self.show_page(self.pages["Gestion Admins"])
+        self.show_page(self.pages["Gestion des administrateurs"])
 
     def _get_icon_for_page(self, page_name: str) -> QIcon:
 
         icon_map = {
-            "Gestion Admins": "Icons/admin.png",
-            "Gestion Chauffeurs": "Icons/driver_icon.png",
-            "Ajouter Images": "Icons/add_image_icon.png",
-            "Afficher Images": "Icons/view_image_icon.png",
-            "Historique": "Icons/history_icon.png",
+            "Gestion des administrateurs": "Icons/admin.png",
+            "Gestion des chauffeurs": "Icons/driver_icon.png",
+            "Ajouter les images": "Icons/add_image_icon.png",
+            "Afficher les images": "Icons/view_image_icon.png",
+            "Voir les historiques": "Icons/history_icon.png",
 
             # Add more mappings as needed
         }

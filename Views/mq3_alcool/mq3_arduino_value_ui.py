@@ -8,7 +8,7 @@ from Controllers.alcool_test_controller import AlcoolTestController
 class Mq3ValueGui(QMainWindow):
     def __init__(self, arduino_controller):
         super().__init__()
-        self.setWindowTitle("MQ3 Alcohol Sensor Monitor")
+        self.setWindowTitle("LECTURE DE LA VALEUR DE CAPTEUR D'ALCOOL")
         self.arduino_controller = arduino_controller
 
         central_widget = QWidget()

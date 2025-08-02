@@ -16,8 +16,8 @@ class FACE_RECOGNITION_CAMERA(QMainWindow):
 
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("GESTION DE LA RECONNAISSANCE FACIALE")
-        self.resize(800, 600)
+        self.setWindowTitle("LA RECONNAISSANCE FACIALE")
+        # self.resize(800, 600)
 
         # Contrôleurs
         self.person_controller = CHAUFFEUR_CONTROLLER()
@@ -69,7 +69,7 @@ class FACE_RECOGNITION_CAMERA(QMainWindow):
         self.url_input.setPlaceholderText("URL de la caméra IP")
         url_section_layout.addWidget(self.url_input)
 
-        self.connect_url_button = QPushButton("Activer URL")
+        self.connect_url_button = QPushButton("Activer l'Url")
         self.connect_url_button.setObjectName("connectUrlButton") # Object name for styling
         self.connect_url_button.setIcon(QIcon("icons/link_icon.png")) # Placeholder for icon
         self.connect_url_button.setIconSize(QSize(20, 20))
@@ -85,7 +85,7 @@ class FACE_RECOGNITION_CAMERA(QMainWindow):
         self.cam_selector.addItems(self.camera_controller.detect_local_cameras())
         local_cam_section_layout.addWidget(self.cam_selector)
 
-        self.connect_local_button = QPushButton("Activer Webcam")
+        self.connect_local_button = QPushButton("Activer la caméra")
         self.connect_local_button.setObjectName("connectLocalButton") # Object name for styling
         self.connect_local_button.setIcon(QIcon("icons/webcam_icon.png")) # Placeholder for icon
         self.connect_local_button.setIconSize(QSize(20, 20))
@@ -95,7 +95,7 @@ class FACE_RECOGNITION_CAMERA(QMainWindow):
         control_layout.addSpacing(15)
 
         # Stop Button
-        self.stop_button = QPushButton("Arrêter")
+        self.stop_button = QPushButton("Arrêter la caméra")
         self.stop_button.setObjectName("stopButton") # Object name for styling
         self.stop_button.setIcon(QIcon("icons/stop_icon.png")) # Placeholder for icon
         self.stop_button.setIconSize(QSize(20, 20))

@@ -14,7 +14,7 @@ class LOGINWINDOW(QMainWindow):
 
     def __init__(self, arduino_controller, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("Connexion")
+        self.setWindowTitle("PAGE DE CONNEXION")
         self.arduino_controller = arduino_controller
 
         self._load_stylesheet("Styles/login_styles.css")
@@ -54,7 +54,7 @@ class LOGINWINDOW(QMainWindow):
         login_section = self._create_section(
             "Images/login.png", "",
             self._create_login_form(),
-            [("Connexion", self._check_login), ("Annuler", self._cancel_login)],
+            [("Se connecter", self._check_login), ("Annuler", self._cancel_login)],
             image_size=(150, 150)
         )
 
@@ -74,7 +74,7 @@ class LOGINWINDOW(QMainWindow):
         camera_section = self._create_section(
             "Images/circular_camera_image.png", "",
             None,
-            [("Accéder à la caméra", self.webcam_page)],
+            [("Accéder à la page caméra", self.webcam_page)],
             image_size=(300, 200)
         )
 
@@ -134,11 +134,11 @@ class LOGINWINDOW(QMainWindow):
         layout.setSpacing(8)
 
         layout.addWidget(QLabel("Nom d'utilisateur :"))
-        self.username_line_edit = self._create_line_edit("Entrez votre nom")
+        self.username_line_edit = self._create_line_edit("Entrez le nom d'utilisateur")
         layout.addWidget(self.username_line_edit)
 
         layout.addWidget(QLabel("Mot de passe :"))
-        self.password_line_edit = self._create_line_edit("", QLineEdit.EchoMode.Password)
+        self.password_line_edit = self._create_line_edit("Entrez le mot de passe", QLineEdit.EchoMode.Password)
         layout.addWidget(self.password_line_edit)
 
         self.show_password_check_box = QCheckBox("Afficher le mot de passe")

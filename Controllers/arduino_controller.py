@@ -6,9 +6,6 @@ from PySide6.QtWidgets import QMessageBox
 from  Controllers.alcool_test_controller import AlcoolTestController
 from datetime import datetime
 class ArduinoController(QObject):
-    """
-    Contrôleur pour gérer la connexion série avec Arduino et lire les données JSON.
-    """
 
     data_received = Signal(str)
     connection_status_changed = Signal(bool)
@@ -82,7 +79,7 @@ class ArduinoController(QObject):
                         self.data_received.emit(line)
             except Exception as e:
                 print(f"[Erreur lecture série] {e}")
-
+    #
     # def extract_alcohol_value(self, raw_line: str):
     #     try:
     #         data = json.loads(raw_line)
