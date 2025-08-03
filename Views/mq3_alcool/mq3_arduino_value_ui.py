@@ -26,11 +26,11 @@ class Mq3ValueGui(QMainWindow):
         layout.addWidget(self.output_display)
         central_widget.setLayout(layout)
 
-        # 📡 Connexions de signaux
+        # Connexions de signaux
         self.arduino_controller.data_received.connect(self.on_data_received)
         self.arduino_controller.connection_status_changed.connect(self.update_status_label)
 
-        # 🗄️ Initialisation du contrôleur de base
+        #Initialisation du contrôleur de base
         self.database_controller = AlcoolTestController()
         self.arduino_controller.set_database_controller(self.database_controller)
 
@@ -53,15 +53,14 @@ class Mq3ValueGui(QMainWindow):
             raw_value = float(data["alcohol"])
             normalized = round(raw_value / 1023.0, 3)
             alert = bool(data.get("alert", False))
-            seuil_detection = 600  #  seuil critique à ajuster selon les tests
+            seuil_detection = 400  #  seuil critique à ajuster selon les tests
 
             couleur = "red" if alert else "green"
             msg_html = (
                 f"<span style='color:{couleur};'>"
                 # f"Alcool brut : {raw_value} | "
-                f"Alcool normalisé : {normalized} | "
-                f"État numérique : {data.get('digital', 'N/A')} | "
-                # f"Alerte : {alert}"
+                f"{normalized} mg/L"
+                # f"  Alerte : {alert}"
                 f"</span>"
             )
 
@@ -74,7 +73,7 @@ class Mq3ValueGui(QMainWindow):
                     # return f"{e}"
                     print(f"[DB ERROR] Échec d'enregistrement (alerte) : {e}")
 
-            # 💾 Optionnel : enregistre valeur normalisée si > 0 (hors alerte)
+            #  Optionnel : enregistre valeur normalisée si > 0 (hors alerte)
             elif normalized > 0:
                 try:
                     self.arduino_controller.db_controller.new_alcool_value(datetime.now(), normalized)
