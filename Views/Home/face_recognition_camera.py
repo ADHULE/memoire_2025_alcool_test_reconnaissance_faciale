@@ -14,7 +14,7 @@ from Controllers.historique_controller import HISTORIQUE_CONTROLLER
 class FACE_RECOGNITION_CAMERA(QMainWindow):
     mainwindow_signal = Signal()
 
-    def __init__(self):
+    def __init__(self, person_controller, image_controller, history_controller=None, arduino_controller=None):
         super().__init__()
         self.setWindowTitle("LA RECONNAISSANCE FACIALE")
         # self.resize(800, 600)
@@ -24,7 +24,7 @@ class FACE_RECOGNITION_CAMERA(QMainWindow):
         self.image_controller = IMAGE_CONTROLLER()
         self.arduino_controller = ArduinoController()
         self.history_controller = HISTORIQUE_CONTROLLER()
-        self.camera_controller = CameraController(self.person_controller, self.image_controller,self.history_controller)
+        self.camera_controller = CameraController( person_controller, image_controller, history_controller, arduino_controller)
 
         # Connexions aux signaux de logique
         self.camera_controller.frame_ready.connect(self.display_frame)

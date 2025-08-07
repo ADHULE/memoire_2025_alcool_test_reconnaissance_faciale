@@ -13,5 +13,5 @@ class HISTORIQUE(Base):
 
     jour_heure = Column(DateTime, nullable=False)
     person_info = Column(String(255), nullable=False)
-    alcool_value = Column(Float, nullable=True)
+    alcool_value = Column(Float, nullable=False)
 

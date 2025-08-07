@@ -1,26 +1,34 @@
+import json
+from datetime import datetime
+
 import serial
 import serial.tools.list_ports
-
 from PySide6.QtCore import QObject, Signal, Slot, QTimer
 from PySide6.QtWidgets import QMessageBox
+
 from Controllers.alcool_test_controller import AlcoolTestController
 
 class ArduinoController(QObject):
     data_received = Signal(str)
     connection_status_changed = Signal(bool)
 
-    def __init__(self, port_combobox=None, status_label=None, seuil_ivresse=0.4):
+    def __init__(self, port_combobox=None, status_label=None):
         super().__init__()
         self.port_combobox = port_combobox
         self.status_label = status_label
-        self.seuil_ivresse = seuil_ivresse
+
         self.serial_connection = None
-        self.last_validated_alcohol_value = None
+        self.save_alcool_value = None
+        self.db_controller = None
 
         # Timer pour lecture périodique
         self.read_timer = QTimer()
         self.read_timer.setInterval(200)  # lecture toutes les 200ms
         self.read_timer.timeout.connect(self._read_serial)
+
+        # Connexion du signal au slot interne
+        self.data_received.connect(self.on_data_received)
+        self.save_controller = AlcoolTestController()
 
     def detect_serial_ports(self):
         if self.port_combobox:
@@ -74,9 +82,6 @@ class ArduinoController(QObject):
             except Exception as e:
                 print(f"[Erreur lecture série] {e}")
 
-    def get_last_alcohol_value(self):
-        return self.last_validated_alcohol_value
-
     def close_connection(self):
         try:
             confirmation = QMessageBox.question(
@@ -94,3 +99,49 @@ class ArduinoController(QObject):
 
     def set_database_controller(self, db_controller: AlcoolTestController):
         self.db_controller = db_controller
+
+    @Slot(str)
+    def on_data_received(self, line):
+        try:
+            data = json.loads(line)
+
+            if "alcohol" not in data:
+                raise ValueError("Donnée 'alcohol' manquante.")
+
+            raw_value = float(data["alcohol"])
+            normalized = round(raw_value / 1023.0, 3)
+            alert = bool(data.get("alert", False))
+            seuil_detection = 400
+
+            if raw_value > seuil_detection:
+                self.save_alcool_value = {
+                    "raw": raw_value,
+                    "normalized": normalized,
+                    "alert": alert,
+                    "seuil": seuil_detection,
+                    "valide": True
+                }
+                print(f"[INFO] Valeur supérieure au seuil détectée : {self.save_alcool_value}")
+                # self._sava_value()
+            else:
+                self.save_alcool_value = None
+                print(f"[INFO] Valeur reçue ({raw_value}) inférieure au seuil ({seuil_detection}) — ignorée.")
+
+        except (json.JSONDecodeError, ValueError) as e:
+            print(f"[Erreur] Ligne non valide : {line} ({e})")
+            self.save_alcool_value = None
+
+    def get_last_alcool_value(self):
+        return self.save_alcool_value
+
+    # def _sava_value(self):
+    #     if self.save_alcool_value and self.save_controller:
+    #         try:
+    #             date = datetime.today()
+    #             valeur = self.save_alcool_value["raw"]
+    #             self.save_controller.new_alcool_value(date, valeur)
+    #             print(f"[BASE DE DONNÉES] Valeur enregistrée : {valeur} à {date}")
+    #         except Exception as e:
+    #             print(f"[ERREUR DB] Échec d'enregistrement : {e}")
+    #     else:
+    #         print("[INFO] Aucune valeur à enregistrer ou contrôleur DB non défini.")
