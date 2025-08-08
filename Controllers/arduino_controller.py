@@ -1,5 +1,4 @@
 import json
-from datetime import datetime
 
 import serial
 import serial.tools.list_ports
@@ -7,6 +6,7 @@ from PySide6.QtCore import QObject, Signal, Slot, QTimer
 from PySide6.QtWidgets import QMessageBox
 
 from Controllers.alcool_test_controller import AlcoolTestController
+
 
 class ArduinoController(QObject):
     data_received = Signal(str)
@@ -16,17 +16,14 @@ class ArduinoController(QObject):
         super().__init__()
         self.port_combobox = port_combobox
         self.status_label = status_label
-
         self.serial_connection = None
         self.save_alcool_value = None
         self.db_controller = None
 
-        # Timer pour lecture périodique
         self.read_timer = QTimer()
-        self.read_timer.setInterval(200)  # lecture toutes les 200ms
+        self.read_timer.setInterval(200)
         self.read_timer.timeout.connect(self._read_serial)
 
-        # Connexion du signal au slot interne
         self.data_received.connect(self.on_data_received)
         self.save_controller = AlcoolTestController()
 
@@ -71,6 +68,13 @@ class ArduinoController(QObject):
     def is_connected(self):
         return self.serial_connection and self.serial_connection.is_open
 
+    def write_to_serial(self, message: str):
+        with self.lock:
+            if self.serial_port.is_open:
+                self.serial_port.write((message + "\n").encode("utf-8"))
+                print(f"[SERIE] Message envoyé à Arduino : {message}")
+            else:
+                print("[SERIE] Port série non ouvert.")
     @Slot()
     def _read_serial(self):
         if self.is_connected() and self.serial_connection.in_waiting:
@@ -104,7 +108,6 @@ class ArduinoController(QObject):
     def on_data_received(self, line):
         try:
             data = json.loads(line)
-
             if "alcohol" not in data:
                 raise ValueError("Donnée 'alcohol' manquante.")
 
@@ -122,7 +125,6 @@ class ArduinoController(QObject):
                     "valide": True
                 }
                 print(f"[INFO] Valeur supérieure au seuil détectée : {self.save_alcool_value}")
-                # self._sava_value()
             else:
                 self.save_alcool_value = None
                 print(f"[INFO] Valeur reçue ({raw_value}) inférieure au seuil ({seuil_detection}) — ignorée.")
@@ -133,15 +135,3 @@ class ArduinoController(QObject):
 
     def get_last_alcool_value(self):
         return self.save_alcool_value
-
-    # def _sava_value(self):
-    #     if self.save_alcool_value and self.save_controller:
-    #         try:
-    #             date = datetime.today()
-    #             valeur = self.save_alcool_value["raw"]
-    #             self.save_controller.new_alcool_value(date, valeur)
-    #             print(f"[BASE DE DONNÉES] Valeur enregistrée : {valeur} à {date}")
-    #         except Exception as e:
-    #             print(f"[ERREUR DB] Échec d'enregistrement : {e}")
-    #     else:
-    #         print("[INFO] Aucune valeur à enregistrer ou contrôleur DB non défini.")

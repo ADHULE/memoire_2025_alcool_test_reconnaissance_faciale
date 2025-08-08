@@ -33,6 +33,7 @@ class CameraController(QObject):
 
         self.last_alcool_value = None
         self.last_alcool_timestamp = None
+        self.seuil_detection = 0.4  # Seuil adapté à la valeur normalisée
 
         if self.arduino_controller is not None:
             self.arduino_controller.data_received.connect(self.on_data_received)
@@ -147,24 +148,26 @@ class CameraController(QObject):
 
     def on_data_received(self, line):
         try:
+            print("[DATA REÇUE]", line)
             data = json.loads(line)
             if "alcohol" not in data:
+                print("[IGNORÉ] Pas de donnée alcool.")
                 return
 
             raw_value = float(data["alcohol"])
             normalized = round(raw_value / 1023.0, 3)
             alert = bool(data.get("alert", False))
-            seuil_detection = 400
 
-            if alert and raw_value > seuil_detection or normalized > 0:
-                self.last_alcool_value = raw_value
+            # print(f"[ALCOOL] brut={raw_value}, normalisé={normalized}, alerte={alert}")
+
+            if alert and normalized > self.seuil_detection:
+                self.last_alcool_value = normalized
                 self.last_alcool_timestamp = datetime.now()
 
                 controller = AlcoolTestController()
                 controller.new_alcool_value(self.last_alcool_timestamp, self.last_alcool_value)
-
-        except (json.JSONDecodeError, ValueError):
-            pass
+        except Exception as e:
+            print("[ERREUR DATA]", e)
 
     def _save_recognition_information(self, date, person_info):
         try:
@@ -172,16 +175,17 @@ class CameraController(QObject):
             image_id = person_info.get("image_id")
             nom = person_info.get("nom")
             telephone = person_info.get("telephone")
-            seuil_detection = 400
 
             alcool_valide = (
                 self.last_alcool_value is not None and
                 self.last_alcool_timestamp is not None and
                 (datetime.now() - self.last_alcool_timestamp).total_seconds() <= 5 and
-                self.last_alcool_value > seuil_detection
+                self.last_alcool_value > self.seuil_detection
             )
 
             reconnaissance_valide = chauffeur_id is not None and image_id is not None
+
+            # print(f"[VÉRIF] alcool_valide={alcool_valide}, reconnaissance_valide={reconnaissance_valide}")
 
             if alcool_valide and reconnaissance_valide:
                 values_string = f"{nom},{telephone}"
@@ -193,14 +197,16 @@ class CameraController(QObject):
                     alcool_value=self.last_alcool_value,
                 )
 
-                print(f"[ENREGISTRÉ] {nom} avec alcool = {self.last_alcool_value}")
+                # print(f"[ENREGISTRÉ] {nom} avec alcool = {self.last_alcool_value}")
 
                 self.last_alcool_value = None
                 self.last_alcool_timestamp = None
             else:
-                print("[IGNORÉ] Conditions non réunies : reconnaissance ou alcool invalide.")
+               pass
+                # print("[IGNORÉ] Conditions non réunies : reconnaissance ou alcool invalide.")
 
         except Exception as e:
             self.error_occurred.emit(f"Erreur sauvegarde historique : {e}")
+            # print("[ERREUR HISTORIQUE]", e)
             if hasattr(self.history_controller, "rollback_session"):
                 self.history_controller.rollback_session()
