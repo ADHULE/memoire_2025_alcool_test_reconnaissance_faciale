@@ -20,6 +20,7 @@ class MODIFIER_ADMIN(QDialog):
         self.username_field = QLineEdit()
         self.password_field = QLineEdit()
         self.password_field.setEchoMode(QLineEdit.Password)
+
         self.role_field = QComboBox()
         self.role_field.addItems(["admin", "éditeur", "invité"])
 
@@ -27,10 +28,10 @@ class MODIFIER_ADMIN(QDialog):
         self.is_active_checkbox = QCheckBox("Actif")
         self.super_admin_checkbox = QCheckBox("Super Admin")
 
-        # Mise en page
+        # Mise en page principale
         layout = QVBoxLayout(self)
 
-
+        # Mise en page du formulaire
         form_layout = QGridLayout()
         form_layout.addWidget(QLabel("Nom d'utilisateur:"), 0, 0)
         form_layout.addWidget(self.username_field, 0, 1)
@@ -47,7 +48,7 @@ class MODIFIER_ADMIN(QDialog):
         form_layout.addWidget(self.super_admin_checkbox, 4, 1)
         layout.addLayout(form_layout)
 
-        # Boutons
+        # Boutons d'action
         btn_layout = QHBoxLayout()
         btn_modifier = QPushButton("Enregistrer")
         btn_modifier.setIcon(QIcon("save.png"))
@@ -63,19 +64,24 @@ class MODIFIER_ADMIN(QDialog):
         btn_layout.addWidget(btn_annuler)
         layout.addLayout(btn_layout)
         layout.addStretch()
-        # Charger les données existantes
+
+        # Chargement des données existantes de l'administrateur
         self._load_admin_data()
 
     def _toggle_password_visibility(self):
+        """🔹 Affiche ou masque le mot de passe selon la case cochée."""
         mode = QLineEdit.Normal if self.show_password_checkbox.isChecked() else QLineEdit.Password
         self.password_field.setEchoMode(mode)
 
     def _show_message(self, title, message):
+        """🔹 Affiche une boîte de dialogue avec un message."""
         QMessageBox.information(self, title, message)
 
     def _load_admin_data(self):
+        """🔹 Charge les données de l'administrateur à modifier."""
         admin = self.admin_controller.get_administrateur_by_username(self.username)
         if admin:
+            self.admin_id = admin.id
             self.username_field.setText(admin.username)
             self.role_field.setCurrentText(admin.role)
             self.is_active_checkbox.setChecked(admin.is_active)
@@ -85,12 +91,14 @@ class MODIFIER_ADMIN(QDialog):
             self.close()
 
     def _modifier_administrateur(self):
+        """🔹 Valide et enregistre les modifications de l'administrateur."""
         username = self.username_field.text().strip()
         role = self.role_field.currentText()
         password = self.password_field.text().strip()
         is_active = self.is_active_checkbox.isChecked()
         super_admin = self.super_admin_checkbox.isChecked()
 
+        # Validation des champs
         if not username or len(username) < 3:
             self._show_message("Erreur", "Le nom d'utilisateur doit contenir au moins 3 caractères.")
             return
@@ -99,10 +107,12 @@ class MODIFIER_ADMIN(QDialog):
             self._show_message("Erreur", "Le mot de passe doit contenir au moins 6 caractères.")
             return
 
+        # Confirmation utilisateur
         reply = QMessageBox.question(self, "Confirmation", "Confirmer les modifications ?", QMessageBox.Yes | QMessageBox.No)
         if reply != QMessageBox.Yes:
             return
 
+        # Mise à jour via le contrôleur
         try:
             success = self.admin_controller.update_administrateur(
                 admin_id=self.admin_id,

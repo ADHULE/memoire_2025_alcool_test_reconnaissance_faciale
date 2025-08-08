@@ -1,5 +1,3 @@
-import json
-
 import serial
 import serial.tools.list_ports
 from PySide6.QtCore import QObject, Signal, Slot, QTimer
@@ -23,9 +21,6 @@ class ArduinoController(QObject):
         self.read_timer = QTimer()
         self.read_timer.setInterval(200)
         self.read_timer.timeout.connect(self._read_serial)
-
-        self.data_received.connect(self.on_data_received)
-        self.save_controller = AlcoolTestController()
 
     def detect_serial_ports(self):
         if self.port_combobox:
@@ -68,13 +63,13 @@ class ArduinoController(QObject):
     def is_connected(self):
         return self.serial_connection and self.serial_connection.is_open
 
-    def write_to_serial(self, message: str):
-        with self.lock:
-            if self.serial_port.is_open:
-                self.serial_port.write((message + "\n").encode("utf-8"))
-                print(f"[SERIE] Message envoyé à Arduino : {message}")
-            else:
-                print("[SERIE] Port série non ouvert.")
+    # def write_to_serial(self, message: str):
+    #     with self.lock:
+    #         if self.serial_port.is_open:
+    #             self.serial_port.write((message + "\n").encode("utf-8"))
+    #             print(f"[SERIE] Message envoyé à Arduino : {message}")
+    #         else:
+    #             print("[SERIE] Port série non ouvert.")
     @Slot()
     def _read_serial(self):
         if self.is_connected() and self.serial_connection.in_waiting:
@@ -84,7 +79,8 @@ class ArduinoController(QObject):
                     print(f"[SERIAL] Reçu : {line}")
                     self.data_received.emit(line)
             except Exception as e:
-                print(f"[Erreur lecture série] {e}")
+                # print(f"[Erreur lecture série] {e}")
+                return e
 
     def close_connection(self):
         try:
@@ -103,35 +99,3 @@ class ArduinoController(QObject):
 
     def set_database_controller(self, db_controller: AlcoolTestController):
         self.db_controller = db_controller
-
-    @Slot(str)
-    def on_data_received(self, line):
-        try:
-            data = json.loads(line)
-            if "alcohol" not in data:
-                raise ValueError("Donnée 'alcohol' manquante.")
-
-            raw_value = float(data["alcohol"])
-            normalized = round(raw_value / 1023.0, 3)
-            alert = bool(data.get("alert", False))
-            seuil_detection = 400
-
-            if raw_value > seuil_detection:
-                self.save_alcool_value = {
-                    "raw": raw_value,
-                    "normalized": normalized,
-                    "alert": alert,
-                    "seuil": seuil_detection,
-                    "valide": True
-                }
-                print(f"[INFO] Valeur supérieure au seuil détectée : {self.save_alcool_value}")
-            else:
-                self.save_alcool_value = None
-                print(f"[INFO] Valeur reçue ({raw_value}) inférieure au seuil ({seuil_detection}) — ignorée.")
-
-        except (json.JSONDecodeError, ValueError) as e:
-            print(f"[Erreur] Ligne non valide : {line} ({e})")
-            self.save_alcool_value = None
-
-    def get_last_alcool_value(self):
-        return self.save_alcool_value

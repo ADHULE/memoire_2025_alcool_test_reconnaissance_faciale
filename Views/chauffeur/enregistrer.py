@@ -15,11 +15,11 @@ class ENREGISTREMENT_CHAUFFEUR(QWidget):
 
         self.main_layout = QVBoxLayout(self)
 
-        # 🔹 Bloc d’enregistrement
+        #Bloc d’enregistrement
         self.form_group = QGroupBox("Ajouter les nouvelles informations")
         self.form_layout = QGridLayout()
 
-        # 🔠 Clé technique → Libellé visuel
+        #Clé technique → Libellé visuel
         self.field_labels = {
             "nom": "Nom",
             "postnom": "Post-Nom",
@@ -29,7 +29,7 @@ class ENREGISTREMENT_CHAUFFEUR(QWidget):
             "numero_permis": "Numéro de permis"
         }
 
-        # 🎯 Champs d’entrée
+        #Champs d’entrée
         self.fields = {}
         for i, (key, label_text) in enumerate(self.field_labels.items()):
             field = QLineEdit()
@@ -38,7 +38,7 @@ class ENREGISTREMENT_CHAUFFEUR(QWidget):
             self.form_layout.addWidget(QLabel(f"{label_text}:"), i, 0)
             self.form_layout.addWidget(field, i, 1)
 
-        # 🔘 Sexe
+        #Sexe
         self.sex_group = QGroupBox()
         self.sex_layout = QHBoxLayout()
         self.radio_homme = QRadioButton("Homme")
@@ -52,7 +52,7 @@ class ENREGISTREMENT_CHAUFFEUR(QWidget):
         self.form_layout.addWidget(QLabel("Sexe:"), len(self.fields), 0)
         self.form_layout.addWidget(self.sex_group, len(self.fields), 1)
 
-        # 💾 Bouton Enregistrer
+        #Bouton Enregistrer
         self.enregistrer_button = QPushButton("Enregistrer")
         self.enregistrer_button.clicked.connect(self._enregistrer_chauffeur)
         self.form_layout.addWidget(self.enregistrer_button, len(self.fields) + 1, 0, 1, 2)
@@ -60,7 +60,7 @@ class ENREGISTREMENT_CHAUFFEUR(QWidget):
         self.form_group.setLayout(self.form_layout)
         self.main_layout.addWidget(self.form_group)
 
-        # 📋 Bloc liste des chauffeurs
+        #Bloc liste des chauffeurs
         self.list_group = QGroupBox("Liste des Chauffeurs")
         self.list_layout = QVBoxLayout()
         self.search_input = QLineEdit()
@@ -88,23 +88,23 @@ class ENREGISTREMENT_CHAUFFEUR(QWidget):
         QMessageBox.information(self, title, message)
 
     def _enregistrer_chauffeur(self):
-        # 🔁 Récupérer les valeurs avec clés techniques
+        #Récupérer les valeurs avec clés techniques
         data = {key: self.fields[key].text().strip() for key in self.fields}
 
-        # 🔘 Déterminer le sexe
+        #Déterminer le sexe
         data["sex"] = (
             "Homme" if self.radio_homme.isChecked() else
             "Femme" if self.radio_femme.isChecked() else
             "Neutre"
         )
 
-        # ✅ Validation
+        #Validation
         required = ["nom", "postnom", "prenom", "telephone", "numero_permis"]
         if not all(data[f] for f in required) or not data["telephone"].isdigit():
             self._show_message("Erreur", "Les champs obligatoires doivent être remplis et le téléphone doit être numérique.")
             return
 
-        # 🔄 Enregistrement
+        #Enregistrement
         if self.chauffeur_controller.new_driver(**data):
             self._show_message("Succès", "Chauffeur enregistré avec succès.")
             self._load_chauffeurs()

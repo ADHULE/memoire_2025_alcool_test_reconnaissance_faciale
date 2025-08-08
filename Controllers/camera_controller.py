@@ -9,36 +9,41 @@ from insightface.app import FaceAnalysis
 from Controllers.historique_controller import HISTORIQUE_CONTROLLER
 
 class CameraController(QObject):
-    frame_ready = Signal(object)
-    error_occurred = Signal(str)
-    recognized = Signal(str, float)
+    # Signaux Qt pour communiquer avec l'interface ou d'autres composants
+    frame_ready = Signal(object)              # Signal pour transmettre une image traitée
+    error_occurred = Signal(str)              # Signal pour transmettre une erreur ou un message
+    recognized = Signal(str, float)           # Signal pour transmettre une reconnaissance faciale réussie
 
     def __init__(self, person_controller, image_controller, history_controller=None, arduino_controller=None, parent=None):
         super().__init__(parent)
 
+        # Initialisation du moteur de reconnaissance faciale
         self.face_engine = FaceAnalysis(name='buffalo_l', providers=['CPUExecutionProvider'])
         self.face_engine.prepare(ctx_id=0)
 
+        # Initialisation des composants
         self.cap = None
         self.timer = QTimer()
         self.timer.timeout.connect(self.process_frame)
 
-        self.face_db = []
-        self.recognition_threshold = 0.65
+        self.face_db = []                     # Base de données des visages
+        self.recognition_threshold = 0.65     # Seuil de reconnaissance faciale
 
         self.person_controller = person_controller
         self.image_controller = image_controller
         self.history_controller = history_controller or HISTORIQUE_CONTROLLER()
         self.arduino_controller = arduino_controller
 
-        self.last_alcool_value = None
-        self.last_alcool_timestamp = None
-        self.seuil_detection = 0.4  # Seuil adapté à la valeur normalisée
+        self.last_alcool_value = None         # Dernière valeur d'alcool reçue
+        self.last_alcool_timestamp = None     # Timestamp de la dernière valeur
+        self.seuil_detection = 0.4            # Seuil de détection pour la valeur normalisée
 
+        # Connexion au signal de réception des données Arduino
         if self.arduino_controller is not None:
             self.arduino_controller.data_received.connect(self.on_data_received)
 
     def detect_local_cameras(self):
+        # Détection des caméras disponibles localement
         available = []
         for index in range(5):
             cap = cv2.VideoCapture(index)
@@ -48,6 +53,7 @@ class CameraController(QObject):
         return available
 
     def load_face_database(self):
+        # Chargement des visages dans la base de données
         self.face_db.clear()
         try:
             images = self.image_controller.get_all_photos()
@@ -78,6 +84,7 @@ class CameraController(QObject):
             self.error_occurred.emit(f"Erreur chargement visages : {e}")
 
     def start_camera(self, source):
+        # Démarrage de la caméra
         self.stop_camera()
         if isinstance(source, str) and source.startswith("Caméra"):
             try:
@@ -92,16 +99,18 @@ class CameraController(QObject):
             self.timer.start(30)
             return True
         else:
-            self.error_occurred.emit("Impossible d’ouvrir la caméra.")
+            # self.error_occurred.emit("Impossible d’ouvrir la caméra.")
             return False
 
     def stop_camera(self):
+        # Arrêt de la caméra
         if self.cap:
             self.timer.stop()
             self.cap.release()
             self.cap = None
 
     def process_frame(self):
+        # Traitement de chaque trame vidéo
         if not self.cap or not self.cap.isOpened():
             self.stop_camera()
             self.error_occurred.emit("La caméra a été déconnectée ou est indisponible.")
@@ -124,6 +133,7 @@ class CameraController(QObject):
             name, best_score, matched_profile = "Inconnu", 0.0, None
             color = (0, 0, 255)
 
+            # Comparaison avec les visages enregistrés
             for profile in self.face_db:
                 sim = np.dot(face.embedding, profile["embedding"]) / (
                     np.linalg.norm(face.embedding) * np.linalg.norm(profile["embedding"]) + 1e-6)
@@ -133,6 +143,7 @@ class CameraController(QObject):
                     best_score = sim
                     color = (0, 255, 0)
 
+            # Affichage du nom sur la trame
             cv2.rectangle(frame, (bbox[0], bbox[1]), (bbox[2], bbox[3]), color, 2)
             cv2.putText(frame, name, (bbox[0], bbox[1] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 2)
 
@@ -144,21 +155,23 @@ class CameraController(QObject):
         self.frame_ready.emit(frame)
 
     def _log_recognition(self, name: str, score: float):
-        print(f"[RECONNU] {name} avec un score de similarité de {score:.2f}")
+        # Log interne de reconnaissance (désactivé en console)
+        # print(f"[RECONNU] {name} avec un score de similarité de {score:.2f}")
+
+        return
 
     def on_data_received(self, line):
+        # Traitement des données reçues de l'Arduino
         try:
-            print("[DATA REÇUE]", line)
+            # print("[DATA REÇUE]", line)
             data = json.loads(line)
             if "alcohol" not in data:
-                print("[IGNORÉ] Pas de donnée alcool.")
+                # print("[IGNORÉ] Pas de donnée alcool.")
                 return
 
             raw_value = float(data["alcohol"])
             normalized = round(raw_value / 1023.0, 3)
             alert = bool(data.get("alert", False))
-
-            # print(f"[ALCOOL] brut={raw_value}, normalisé={normalized}, alerte={alert}")
 
             if alert and normalized > self.seuil_detection:
                 self.last_alcool_value = normalized
@@ -166,10 +179,14 @@ class CameraController(QObject):
 
                 controller = AlcoolTestController()
                 controller.new_alcool_value(self.last_alcool_timestamp, self.last_alcool_value)
+
+
         except Exception as e:
-            print("[ERREUR DATA]", e)
+            # self.error_occurred.emit(f"Erreur dans la lecture Arduino : {e}")
+            pass
 
     def _save_recognition_information(self, date, person_info):
+        # Sauvegarde des informations de reconnaissance et alcool
         try:
             chauffeur_id = person_info.get("id")
             image_id = person_info.get("image_id")
@@ -185,8 +202,6 @@ class CameraController(QObject):
 
             reconnaissance_valide = chauffeur_id is not None and image_id is not None
 
-            # print(f"[VÉRIF] alcool_valide={alcool_valide}, reconnaissance_valide={reconnaissance_valide}")
-
             if alcool_valide and reconnaissance_valide:
                 values_string = f"{nom},{telephone}"
                 self.history_controller.new_history(
@@ -197,16 +212,11 @@ class CameraController(QObject):
                     alcool_value=self.last_alcool_value,
                 )
 
-                # print(f"[ENREGISTRÉ] {nom} avec alcool = {self.last_alcool_value}")
 
                 self.last_alcool_value = None
                 self.last_alcool_timestamp = None
-            else:
-               pass
-                # print("[IGNORÉ] Conditions non réunies : reconnaissance ou alcool invalide.")
 
         except Exception as e:
             self.error_occurred.emit(f"Erreur sauvegarde historique : {e}")
-            # print("[ERREUR HISTORIQUE]", e)
             if hasattr(self.history_controller, "rollback_session"):
                 self.history_controller.rollback_session()

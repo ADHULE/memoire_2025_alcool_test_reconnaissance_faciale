@@ -10,7 +10,7 @@ class IMAGE_CONTROLLER:
     """Gestion des opérations CRUD sur les images dans la base de données."""
 
     def __init__(self):
-        self.session = my_session  # ✅ Correction de l'accès à la session
+        self.session = my_session  #Correction de l'accès à la session
 
     @staticmethod
     def validate_input(value, field_name):
@@ -20,7 +20,7 @@ class IMAGE_CONTROLLER:
             return False
         return True
 
-    # CREATE - Ajouter une image
+    # Ajouter une image
     def add_photo(self, url, personne_id):
         if not self.validate_input(url, "URL") or not self.validate_input(personne_id, "ID de la personne"):
             return None
@@ -37,7 +37,7 @@ class IMAGE_CONTROLLER:
             logger.error(f"Erreur lors de l'ajout de la photo : {e}")
             return None
 
-    # READ - Récupérer une image par ID
+    # Récupérer une image par ID
     def get_photo(self, photo_id):
         if not self.validate_input(photo_id, "ID de la photo"):
             return None
@@ -48,7 +48,7 @@ class IMAGE_CONTROLLER:
             logger.error(f"Erreur lors de la récupération de la photo : {e}")
             return None
 
-    # READ - Récupérer toutes les images
+    # Récupérer toutes les images
     def get_all_photos(self, limit=100):
         try:
             return self.session.query(IMAGE).limit(limit).all()
@@ -56,7 +56,7 @@ class IMAGE_CONTROLLER:
             logger.error(f"Erreur lors de la récupération des photos : {e}")
             return None
 
-    # UPDATE - Mettre à jour une image
+    # Mettre à jour une image
     def update_photo(self, photo_id, new_url=None, new_personne_id=None):
         if not self.validate_input(photo_id, "ID de la photo"):
             return None
@@ -80,7 +80,7 @@ class IMAGE_CONTROLLER:
             logger.error(f"Erreur lors de la mise à jour : {e}")
             return None
 
-    # DELETE - Supprimer une image par ID
+    # Supprimer une image par ID
     def delete_photo(self, photo_id):
         if not self.validate_input(photo_id, "ID de la photo"):
             return False
@@ -99,7 +99,7 @@ class IMAGE_CONTROLLER:
             logger.error(f"Erreur lors de la suppression de la photo : {e}")
             return False
 
-    # DELETE - Supprimer une image par son chemin (URL)
+    # Supprimer une image par son chemin (URL)
     def delete_photo_by_path(self, image_path):
         if not self.validate_input(image_path, "Chemin de l'image"):
             return False
@@ -118,7 +118,7 @@ class IMAGE_CONTROLLER:
             logger.error(f"Erreur lors de la suppression par chemin : {e}")
             return False
 
-    # ✅ Méthode manquante corrigée
+    # Méthode manquante corrigée
     def get_image_path_by_id(self, image_id):
         if not self.validate_input(image_id, "ID de l'image"):
             return None

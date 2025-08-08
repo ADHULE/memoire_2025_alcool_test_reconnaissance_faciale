@@ -18,7 +18,7 @@ from Views.historique.display_history import DISPLAY_HISTORY
 from Views.image.image_view import IMAGE_VIEW
 from Views.image.modifier_photo import MODIFIER_IMAGES_PAGE
 from Views.image.photo_display import DISPLAY_IMAGES
-from Views.mq3_alcool.alcool_mananger import AlcoolDataManager
+# from Views.mq3_alcool.alcool_mananger import AlcoolDataManager
 
 
 

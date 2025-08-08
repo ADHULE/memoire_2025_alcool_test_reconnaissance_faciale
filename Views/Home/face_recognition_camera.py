@@ -8,8 +8,9 @@ from PySide6.QtWidgets import (
 from Controllers.arduino_controller import ArduinoController
 from Controllers.camera_controller import CameraController
 from Controllers.chauffeur_controller import CHAUFFEUR_CONTROLLER
-from Controllers.image_controller import IMAGE_CONTROLLER
 from Controllers.historique_controller import HISTORIQUE_CONTROLLER
+from Controllers.image_controller import IMAGE_CONTROLLER
+
 
 class FACE_RECOGNITION_CAMERA(QMainWindow):
     mainwindow_signal = Signal()

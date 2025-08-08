@@ -1,10 +1,9 @@
 from Models.chauffeur_model import CHAUFFEUR
 from Models.database_model import my_session
 
-
 class CHAUFFEUR_CONTROLLER:
-    def new_driver(self, nom, postnom, prenom, telephone, email, numero_permis,sex):
-
+    def new_driver(self, nom, postnom, prenom, telephone, email, numero_permis, sex):
+        """🔹 Créer et enregistrer un nouveau chauffeur dans la base de données."""
         try:
             new_chauffeur = CHAUFFEUR(
                 nom=nom,
@@ -21,25 +20,24 @@ class CHAUFFEUR_CONTROLLER:
             my_session.refresh(new_chauffeur)
             return new_chauffeur
         except Exception as e:
-            print(f"Erreur d'enregistrement du chauffeur : {str(e)}")
+            # print(f"Erreur d'enregistrement du chauffeur : {str(e)}")
             return None
 
     def get_all_drivers(self):
-        """🔹 Récupérer tous les chauffeurs."""
+        """🔹 Récupérer tous les chauffeurs enregistrés."""
         try:
-
             return my_session.query(CHAUFFEUR).all()
         except Exception as e:
-            print(f"Erreur de récupération des chauffeurs : {str(e)}")
+            # print(f"Erreur de récupération des chauffeurs : {str(e)}")
             return []
 
     def get_driver_by_id(self, chauffeur_id):
-        """🔹 Récupérer un chauffeur par son identifiant."""
+        """🔹 Récupérer un chauffeur par son identifiant unique."""
         try:
             chauffeur = my_session.query(CHAUFFEUR).filter(CHAUFFEUR.id == chauffeur_id).first()
             return chauffeur
         except Exception as e:
-            print(f"Erreur de récupération du chauffeur : {str(e)}")
+            # print(f"Erreur de récupération du chauffeur : {str(e)}")
             return None
 
     def update_driver(
@@ -53,15 +51,13 @@ class CHAUFFEUR_CONTROLLER:
         numero_permis=None,
         sex=None
     ):
-        """🔹 Mettre à jour un chauffeur."""
+        """🔹 Mettre à jour les informations d'un chauffeur existant."""
         try:
-
-            chauffeur = (
-                my_session.query(CHAUFFEUR).filter(CHAUFFEUR.id == chauffeur_id).first()
-            )
+            chauffeur = my_session.query(CHAUFFEUR).filter(CHAUFFEUR.id == chauffeur_id).first()
             if not chauffeur:
                 return None
 
+            # Mise à jour des champs si fournis
             if nom:
                 chauffeur.nom = nom
             if postnom:
@@ -75,21 +71,19 @@ class CHAUFFEUR_CONTROLLER:
             if numero_permis:
                 chauffeur.numero_permis = numero_permis
             if sex:
-                chauffeur.sex=sex
+                chauffeur.sex = sex
+
             my_session.commit()
             my_session.refresh(chauffeur)
             return chauffeur
         except Exception as e:
-            print(f"Erreur de mise à jour : {str(e)}")
+            # print(f"Erreur de mise à jour : {str(e)}")
             return None
 
     def delete_driver(self, chauffeur_id):
-        """🔹 Supprimer un chauffeur."""
+        """🔹 Supprimer un chauffeur de la base de données."""
         try:
-
-            chauffeur = (
-                my_session.query(CHAUFFEUR).filter(CHAUFFEUR.id == chauffeur_id).first()
-            )
+            chauffeur = my_session.query(CHAUFFEUR).filter(CHAUFFEUR.id == chauffeur_id).first()
             if not chauffeur:
                 return False
 
@@ -97,5 +91,5 @@ class CHAUFFEUR_CONTROLLER:
             my_session.commit()
             return True
         except Exception as e:
-            print(f"Erreur de suppression : {str(e)}")
+            # print(f"Erreur de suppression : {str(e)}")
             return False

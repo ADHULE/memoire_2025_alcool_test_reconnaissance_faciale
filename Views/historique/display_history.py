@@ -31,7 +31,7 @@ class DISPLAY_HISTORY(QWidget):
         # Barre de recherche
         toolbar_layout = QHBoxLayout()
         self.search_edit = QLineEdit()
-        self.search_edit.setPlaceholderText("Rechercher par date/informations...")
+        self.search_edit.setPlaceholderText("Rechercher par les informations...")
         self.search_edit.textChanged.connect(self.filter_history)
         toolbar_layout.addWidget(self.search_edit)
 
