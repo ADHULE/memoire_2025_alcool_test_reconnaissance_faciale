@@ -159,7 +159,7 @@ class LOGINWINDOW(QMainWindow):
         self.status_label = QLabel("Déconnecté")
         self.status_label.setStyleSheet("font-weight: bold; color: red;")
 
-        self.btn_arduino_value = QPushButton("Arduino Value")
+        self.btn_arduino_value = QPushButton("Valeur Arduino")
         self.btn_arduino_value.clicked.connect(self.go_to_arduno_value_page)
 
         status_layout = QHBoxLayout()
